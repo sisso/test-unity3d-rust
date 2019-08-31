@@ -2,5 +2,7 @@
 
 cargo build --release
 
-cp -v target/release/librustlib.so ../Assets/lib
+source=target/release/librustlib.so
 
+cp -v $source ../Assets/Plugins/lib
+cp -v $source ../build/01_Data/Plugins/librustlib.so
