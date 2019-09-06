@@ -13,15 +13,38 @@ namespace Rust
         public Int32 x;
         public Int32 y;
     }
-   
-     [StructLayout(LayoutKind.Sequential)]
+
+    [StructLayout(LayoutKind.Sequential)]
     struct Buffer
     {
         public Int32 len;
         public IntPtr ptr;
     }
 
-    public static class Proxy {
+    public class Context
+    {
+        internal IntPtr ptr;
+
+        public Context(IntPtr ptr)
+        {
+            this.ptr = ptr;
+        }
+
+        public void SetInput(int value)
+        {
+            Proxy.SetInput(this, value);
+        }
+
+        public int GetInput()
+        {
+            return Proxy.GetInput(this);
+        }
+    }
+
+    public static class Proxy
+    {
+        private static Context context = null;
+
         [DllImport("librustlib")]
         private static extern Int32 add_numbers(Int32 number1, Int32 number2);
 
@@ -33,6 +56,57 @@ namespace Rust
 
         [DllImport("librustlib")]
         private static extern void free_buf(Buffer buffer);
+
+        [DllImport("librustlib")]
+        private static extern bool context_create(out IntPtr ptr);
+
+        [DllImport("librustlib")]
+        private static extern bool context_close(out IntPtr ptr);
+
+        [DllImport("librustlib")]
+        private static extern Int32 context_get_input(out IntPtr ptr);
+
+        [DllImport("librustlib")]
+        private static extern bool context_set_input(out IntPtr ptr, Int32 value);
+
+        public static Context GetContext()
+        {
+            if (context != null)
+                return context;
+
+            IntPtr ptr;
+            context_create(out ptr);
+
+            Debug.Log("Creating context: " + ptr.ToString());
+
+            context = new Context(ptr);
+            return context;
+        }
+
+        public static void CloseContext()
+        {
+            if (context == null)
+                return;
+
+            Debug.Log("Closing context");
+
+            context_close(out context.ptr);
+            context = null;
+        }
+
+        public static void SetInput(Context ctx, int value)
+        {
+            var result = context_set_input(out ctx.ptr, value);
+            if (!result)
+            {
+                Debug.LogError("Failed to set value " + value + ".");
+            }
+        }
+
+        public static int GetInput(Context ctx)
+        {
+            return context_get_input(out ctx.ptr);
+        }
 
         public static int Sum(int a, int b)
         {

@@ -42,6 +42,10 @@ impl<'a> Context {
             Ok(())
         }
     }
+
+    fn get_input(&self) -> i32 {
+        self.input
+    }
 }
 
 #[no_mangle]
@@ -52,14 +56,15 @@ pub extern "C" fn context_create(ptr: *mut *const Context) -> bool {
         *ptr = ctx.to_ptr();
     }
 
-    // if failed
+    // if failed_to_create {
     // *ptr = ptr::null; false
+    // }
 
     true
 }
 
 #[no_mangle]
-pub extern "C" fn context_close(ptr: *mut *mut Context) {
+pub extern "C" fn context_close(ptr: *mut *mut Context) -> bool {
     if !ptr.is_null() && unsafe {!(*ptr).is_null() } {
         Context::close(ptr);
 
@@ -67,6 +72,8 @@ pub extern "C" fn context_close(ptr: *mut *mut Context) {
             *ptr = ptr::null_mut();
         }
     }
+
+    true
 }
 
 #[no_mangle]
@@ -84,6 +91,15 @@ pub extern "C" fn context_set_input(ptr: *mut Context, value: i32) -> bool {
                 false
             },
         }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn context_get_input(ptr: *mut Context) -> i32 {
+    if ptr.is_null() {
+        0
+    } else {
+        Context::from_ptr(ptr).get_input()
     }
 }
 

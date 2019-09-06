@@ -23,17 +23,24 @@ public class UseSum : MonoBehaviour
         }
     }
 
+    void Destroy()
+    {
+        Debug.Log("Closing context");
+        Rust.Proxy.CloseContext();
+    }
+
+    void OnApplicationQuit()
+    {
+        Debug.Log("Closing context by OnApplicationQuit");
+        // TODO FIXME OMG
+        // Rust.Proxy.CloseContext();
+    }
+
     // Update is called once per frame
     void Update()
     {
-        if (state == 0)
-        {
-            state = 1;
-        }
-        else if (state == 1)
-        {
-
-            state = 2;
-        }
+        // Debug.Log("Get value: " + Rust.Proxy.GetContext().GetInput());
+        state += 1;
+        Rust.Proxy.GetContext().SetInput(state);
     }
 }

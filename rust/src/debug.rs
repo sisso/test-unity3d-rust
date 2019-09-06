@@ -9,7 +9,9 @@ macro_rules! debug {
                 use std::io::Write;
                 file.write_all(format!("{}\n", $fmt).as_bytes()).ok();
             }
-            Err(_) => {},
+            Err(_) => {
+                panic!("failed to open log file")
+            },
         });
     ($fmt:expr, $($arg:tt)*) => (match ::std::fs::OpenOptions::new()
         .append(true)
@@ -19,6 +21,8 @@ macro_rules! debug {
                 use std::io::Write;
                 file.write_all(format!(concat!($fmt, "\n"), $($arg)*).as_bytes()).ok();
             }
-            Err(_) => {},
+            Err(_) => {
+                panic!("failed to open log file")
+            },
         });
 }
