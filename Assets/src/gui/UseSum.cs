@@ -33,7 +33,7 @@ public class UseSum : MonoBehaviour
     {
         Debug.Log("Closing context by OnApplicationQuit");
         // TODO FIXME OMG
-        // Rust.Proxy.CloseContext();
+        Rust.Proxy.CloseContext();
     }
 
     // Update is called once per frame

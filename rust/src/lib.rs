@@ -7,7 +7,9 @@ use std::net::UdpSocket;
 use std::os::raw::c_char;
 use std::ptr;
 use std::result::Result;
+use std::io::Write;
 
+#[derive(Debug)]
 pub struct Context {
     input: i32,
     output: u32,
@@ -31,6 +33,7 @@ impl<'a> Context {
 
     fn close(ptr: *mut *mut Context) {
         let b: Box<Context> = unsafe { transmute(ptr) };
+        debug!("close unboxed content {:?}", b);
         drop(b);
     }
 
@@ -52,6 +55,8 @@ impl<'a> Context {
 pub extern "C" fn context_create(ptr: *mut *const Context) -> bool {
     let ctx = Context::new();
 
+    debug!("context_create before pointer {:?}", ctx);
+
     unsafe {
         *ptr = ctx.to_ptr();
     }
@@ -65,12 +70,20 @@ pub extern "C" fn context_create(ptr: *mut *const Context) -> bool {
 
 #[no_mangle]
 pub extern "C" fn context_close(ptr: *mut *mut Context) -> bool {
+    debug!("receive context_close");
+
     if !ptr.is_null() && unsafe {!(*ptr).is_null() } {
+        debug!("safe to close, do it");
+
         Context::close(ptr);
+
+        debug!("clean up pointer");
 
         unsafe {
             *ptr = ptr::null_mut();
         }
+
+        debug!("done");
     }
 
     true
@@ -81,9 +94,11 @@ pub extern "C" fn context_set_input(ptr: *mut Context, value: i32) -> bool {
     if ptr.is_null() {
         false
     } else {
-        match Context::from_ptr(ptr).set_input(value) {
+        let ctx = Context::from_ptr(ptr);
+        debug!("setting input {:?} before {:?}",value,  ctx);
+        match ctx.set_input(value) {
             Ok(_) => {
-                debug!("setting input as {}", value);
+                debug!("setting input after {:?}", ctx);
                 true
             },
             Err(msg) => {
@@ -99,7 +114,9 @@ pub extern "C" fn context_get_input(ptr: *mut Context) -> i32 {
     if ptr.is_null() {
         0
     } else {
-        Context::from_ptr(ptr).get_input()
+        let ctx = Context::from_ptr(ptr);
+        debug!("getting input as {:?}", ctx);
+        ctx.get_input()
     }
 }
 
