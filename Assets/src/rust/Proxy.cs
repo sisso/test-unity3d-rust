@@ -21,23 +21,49 @@ namespace Rust
         public IntPtr ptr;
     }
 
-    public class Context
+    internal class ContextHandler : SafeHandle
     {
-        internal IntPtr ptr;
-
-        public Context(IntPtr ptr)
+        public ContextHandler() : base(IntPtr.Zero, true)
         {
-            this.ptr = ptr;
+        }
+
+        public override bool IsInvalid
+        {
+            get
+            {
+                return false;
+            }
+        }
+
+        protected override bool ReleaseHandle()
+        {
+            Proxy.context_close_2(handle);
+            return true;
+        }
+    }
+
+    public class Context : IDisposable
+    {
+        private ContextHandler handler;
+
+        public Context()
+        {
+            this.handler = Proxy.context_create_2();
         }
 
         public void SetInput(int value)
         {
-            Proxy.SetInput(this, value);
+            Proxy.context_set_input(handler, value);
         }
 
         public int GetInput()
         {
-            return Proxy.GetInput(this);
+            return Proxy.context_get_input(handler);
+        }
+
+        public void Dispose()
+        {
+            handler.Dispose();
         }
     }
 
@@ -57,56 +83,64 @@ namespace Rust
         [DllImport("librustlib")]
         private static extern void free_buf(Buffer buffer);
 
-        [DllImport("librustlib")]
-        private static extern bool context_create(out IntPtr ptr);
+        //[DllImport("librustlib")]
+        //private static extern bool context_create(out IntPtr ptr);
+
+        //[DllImport("librustlib")]
+        //private static extern bool context_close(out IntPtr ptr);
 
         [DllImport("librustlib")]
-        private static extern bool context_close(out IntPtr ptr);
+        internal static extern ContextHandler context_create_2();
 
         [DllImport("librustlib")]
-        private static extern Int32 context_get_input(out IntPtr ptr);
+        internal static extern void context_close_2(IntPtr ptr);
 
         [DllImport("librustlib")]
-        private static extern bool context_set_input(out IntPtr ptr, Int32 value);
+        internal static extern Int32 context_get_input(ContextHandler ptr);
 
-        public static Context GetContext()
-        {
-            if (context != null)
-                return context;
+        [DllImport("librustlib")]
+        internal static extern bool context_set_input(ContextHandler ptr, Int32 value);
 
-            IntPtr ptr;
-            context_create(out ptr);
+        //public static Context GetContext()
+        //{
+        //    if (context != null)
+        //        return context;
 
-            Debug.Log("Creating context: " + ptr.ToString());
+        //    //IntPtr ptr;
+        //    //context_create(out ptr);
 
-            context = new Context(ptr);
-            return context;
-        }
+        //    IntPtr ptr = context_create_2();
 
-        public static void CloseContext()
-        {
-            if (context == null)
-                return;
+        //    Debug.Log("Creating context: " + ptr.ToString());
 
-            Debug.Log("Closing context");
+        //    context = new Context(ptr);
+        //    return context;
+        //}
 
-            context_close(out context.ptr);
-            context = null;
-        }
+        //public static void CloseContext()
+        //{
+        //    if (context == null)
+        //        return;
 
-        public static void SetInput(Context ctx, int value)
-        {
-            var result = context_set_input(out ctx.ptr, value);
-            if (!result)
-            {
-                Debug.LogError("Failed to set value " + value + ".");
-            }
-        }
+        //    Debug.Log("Closing context");
 
-        public static int GetInput(Context ctx)
-        {
-            return context_get_input(out ctx.ptr);
-        }
+        //    context_close_2(out context.ptr);
+        //    context = null;
+        //}
+
+        //public static void SetInput(Context ctx, int value)
+        //{
+        //    var result = context_set_input(out ctx.ptr, value);
+        //    if (!result)
+        //    {
+        //        Debug.LogError("Failed to set value " + value + ".");
+        //    }
+        //}
+
+        //public static int GetInput(Context ctx)
+        //{
+        //    return context_get_input(out ctx.ptr);
+        //}
 
         public static int Sum(int a, int b)
         {

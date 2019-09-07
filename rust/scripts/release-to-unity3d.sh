@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
-cargo build --release
+set -euo pipefail
 
-source=target/release/librustlib.so
+(
+  cd rust
+  cargo build --release
+)
 
-cp -v $source ../Assets/Plugins/lib
-cp -v $source ../build/01_Data/Plugins/librustlib.so
+source=rust/target/release/librustlib.so
+
+cp -v $source ./Assets/Plugins/lib
+cp -v $source ./build/01_Data/Plugins/librustlib.so
