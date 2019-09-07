@@ -23,22 +23,12 @@ impl<'a> Context {
         }
     }
 
-//    fn to_ptr(self) -> *mut Context {
-//        unsafe { transmute(Box::new(self)) }
-//    }
-
     fn from_ptr(ptr: *mut Context) -> &'a mut Context {
         unsafe {
             assert!(!ptr.is_null());
             &mut *ptr
         }
     }
-
-//    fn close(ptr: *mut *mut Context) {
-//        let b: Box<Context> = unsafe { transmute(ptr) };
-//        debug!("close unboxed content {:?}", b);
-//        drop(b);
-//    }
 
     fn set_input(&mut self, value: i32) -> Result<(), String> {
         if value < 0 {
@@ -55,7 +45,7 @@ impl<'a> Context {
 }
 
 #[no_mangle]
-pub extern fn context_create_2() -> *mut Context {
+pub extern fn context_create() -> *mut Context {
     let context = Context::new();
 
     debug!("context_create {:?}", context);
@@ -64,49 +54,11 @@ pub extern fn context_create_2() -> *mut Context {
 }
 
 #[no_mangle]
-pub extern fn context_close_2(ptr: *mut Context) {
+pub extern fn context_close(ptr: *mut Context) {
     if ptr.is_null() { return }
     let ctx = unsafe { Box::from_raw(ptr); };
     debug!("context_close {:?}", ctx);
 }
-
-//#[no_mangle]
-//pub extern "C" fn context_create(ptr: *mut *const Context) -> bool {
-//    let ctx = Context::new();
-//
-//    debug!("context_create before pointer {:?}", ctx);
-//
-//    unsafe {
-//        *ptr = ctx.to_ptr();
-//    }
-//
-//    // if failed_to_create {
-//    // *ptr = ptr::null; false
-//    // }
-//
-//    true
-//}
-//
-//#[no_mangle]
-//pub extern "C" fn context_close(ptr: *mut *mut Context) -> bool {
-//    debug!("receive context_close");
-//
-//    if !ptr.is_null() && unsafe {!(*ptr).is_null() } {
-//        debug!("safe to close, do it");
-//
-//        Context::close(ptr);
-//
-//        debug!("clean up pointer");
-//
-//        unsafe {
-//            *ptr = ptr::null_mut();
-//        }
-//
-//        debug!("done");
-//    }
-//
-//    true
-//}
 
 #[no_mangle]
 pub extern "C" fn context_set_input(ptr: *mut Context, value: i32) -> bool {
@@ -152,12 +104,6 @@ struct Buffer {
 }
 
 #[no_mangle]
-pub extern fn add_numbers(number1: i32, number2: i32) -> i32 {
-    println!("Hello from rust!");
-    number1 + number2
-}
-
-#[no_mangle]
 pub extern "C" fn get_simple_struct() -> V2 {
     V2 {
         x: 1,
@@ -165,17 +111,17 @@ pub extern "C" fn get_simple_struct() -> V2 {
     }
 }
 
-#[no_mangle]
-extern "C" fn get_vectors(ptr: *mut *const V2) -> bool {
-//    let list: [V2; 2] = [V2 { x: 0, y: 1 }, V2 { x: 1, y: 0 }];
-//
-//    unsafe {
-//        *ptr = list.as_ptr();
-//    }
-//
-//    true
-    false
-}
+//#[no_mangle]
+//extern "C" fn get_vectors(ptr: *mut *const V2) -> bool {
+////    let list: [V2; 2] = [V2 { x: 0, y: 1 }, V2 { x: 1, y: 0 }];
+////
+////    unsafe {
+////        *ptr = list.as_ptr();
+////    }
+////
+////    true
+//    false
+//}
 
 #[no_mangle]
 extern "C" fn generate_data() -> Buffer {
@@ -201,6 +147,6 @@ mod tests {
 
     #[test]
     fn it_works() {
-        assert_eq!(add_numbers(2, 2), 4);
+        assert_eq!(0, 0);
     }
 }

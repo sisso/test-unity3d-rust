@@ -13,7 +13,6 @@ public class UseSum : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        //var result = Rust.Proxy.Sum(2, 2);
         //var stru = Rust.Proxy.Get();
         //target.transform.Translate(stru.x, result, stru.y);
         //Debug.Log("Receive: " + result + " and " + stru);
