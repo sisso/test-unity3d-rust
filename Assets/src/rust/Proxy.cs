@@ -7,6 +7,49 @@ using System;
 
 namespace Rust
 {
+    public interface ContextInput
+    {
+    //    int GetKindId();
+    //    int GetMessageType();
+    //    int GetRequestId();
+    }
+
+    public class MessageDefinition
+    {
+        private int messageId;
+        private int messageKind;
+
+        public MessageDefinition(int messageId, int messageKind)
+        {
+            this.messageId = messageId;
+            this.messageKind = messageKind;
+        }
+    }
+
+
+    public static class MessageKind
+    {
+    }
+
+    public static class MessageType
+    {
+        public const int KIND_EMPTY = 0;
+        public const int KIND_STRING = 1;
+
+        private static MessageDefinition N(int messageId, int messageKind) {
+            return new MessageDefinition(messageId, messageKind);
+        }
+
+        public static readonly MessageDefinition LOGIN = N(0, KIND_EMPTY);
+        public static readonly MessageDefinition LOGOUT = N(1, KIND_EMPTY);
+        public static readonly MessageDefinition SET_INPUT = N(2, KIND_STRING);
+        public static readonly MessageDefinition REFRESH = N(3, KIND_EMPTY);
+    }
+
+    public class Login : ContextInput
+    {
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     public struct V2
     {
@@ -20,6 +63,68 @@ namespace Rust
         public Int32 len;
         public IntPtr ptr;
     }
+
+    internal class FFIStringHandler : SafeHandle
+    {
+        public FFIStringHandler() : base(IntPtr.Zero, true)
+        {
+        }
+
+        public string AsString()
+        {
+            int len = 0;
+            while (Marshal.ReadByte(handle, len) != 0) { ++len; }
+            byte[] buffer = new byte[len];
+            Marshal.Copy(handle, buffer, 0, buffer.Length);
+            return System.Text.Encoding.UTF8.GetString(buffer);
+        }
+
+        public override bool IsInvalid
+        {
+            get
+            {
+                return false;
+            }
+        }
+
+        protected override bool ReleaseHandle()
+        {
+            Proxy.free_string(handle);
+            return true;
+        }
+    }
+
+    //class FfiString
+    //{
+    //    private FFIStringHandler handler;
+    //    private string str;
+
+    //    public FfiString(byte length)
+    //    {
+    //        song = Native.theme_song_generate(length);
+    //    }
+
+    //    public override string ToString()
+    //    {
+    //        if (songString == null)
+    //        {
+    //            songString = song.AsString();
+    //        }
+    //        return songString;
+    //    }
+
+    //    public void Dispose()
+    //    {
+    //        song.Dispose();
+    //    }
+
+    //    static public void Main()
+    //    {
+    //        var song = new ThemeSong(5);
+    //        Console.WriteLine("{0}", song);
+    //    }
+    //}
+
 
     internal class ContextHandler : SafeHandle
     {
@@ -60,6 +165,29 @@ namespace Rust
         {
             return Proxy.context_get_input(handler);
         }
+              
+        public void AddRequest(string str)
+        {
+            if (!Proxy.context_add_request(handler, str))
+            {
+                Debug.LogWarning("Failed returned from FFI method");
+            }
+        }
+
+        public string GetResponses()
+        {
+            var handle = Proxy.context_get_responses(handler);
+            var str = handle.AsString();
+            return str;
+        }
+
+        public void Execute()
+        {
+            if (!Proxy.context_execute(handler))
+            {
+                Debug.LogWarning("Failed returned from FFI method");
+            }
+        }
 
         public void Dispose()
         {
@@ -69,8 +197,6 @@ namespace Rust
 
     public static class Proxy
     {
-        private static Context context = null;
-
         [DllImport("librustlib")]
         private static extern V2 get_simple_struct();
 
@@ -91,6 +217,15 @@ namespace Rust
 
         [DllImport("librustlib")]
         internal static extern bool context_set_input(ContextHandler ptr, Int32 value);
+
+        [DllImport("librustlib")]
+        internal static extern bool context_execute(ContextHandler ptr);
+        [DllImport("librustlib")]
+        internal static extern bool context_add_request(ContextHandler ptr, string value);
+        [DllImport("librustlib")]
+        internal static extern FFIStringHandler context_get_responses(ContextHandler ptr);
+        [DllImport("librustlib")]
+        internal static extern bool free_string(IntPtr ptr);
 
         public static V2 Get()
         {

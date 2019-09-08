@@ -42,11 +42,33 @@ public class UseSum : MonoBehaviour
     //    Rust.Proxy.CloseContext();
     //}
 
+
+
     // Update is called once per frame
     void Update()
     {
-        Debug.Log("Get value: " + context.GetInput());
+        // Debug.Log("Get value: " + context.GetInput());
         state += 1;
         context.SetInput(state);
+
+        for (int i = 0; i < 3; i++)
+        {
+            if (Input.GetMouseButtonDown(i))
+            {
+                context.AddRequest("button "+i+" down");
+            }
+
+            if (Input.GetMouseButtonUp(i))
+            {
+                context.AddRequest("button "+i+" up");
+            }
+        }
+
+        context.Execute();
+
+        var responses = context.GetResponses();
+        foreach (var line in responses.Split('\n')) {
+            Debug.Log("response " + line);
+        }
     }
 }

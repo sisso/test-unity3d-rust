@@ -1,6 +1,7 @@
 #[macro_use]
 mod debug;
 
+use std::ffi::CString;
 use std::ffi::CStr;
 use std::mem::{drop, transmute};
 use std::net::UdpSocket;
@@ -9,17 +10,46 @@ use std::ptr;
 use std::result::Result;
 use std::io::Write;
 
+enum Requests {
+    SetValue,
+    GetValue,
+}
+
+enum Responses {
+    Value {
+        result: u32,
+    }
+}
+
 #[derive(Debug)]
 pub struct Context {
     input: i32,
     output: u32,
+    requests: Option<Vec<String>>,
+    responses: Option<Vec<String>>,
 }
+
+//#[derive(Debug)]
+//struct RawInOut {
+//    data_kind: u32,
+//    message_kind: u32,
+//    request_id: u32,
+//    bytes: *const u8,
+//}
+//
+//#[derive(Debug)]
+//struct RawInOutList {
+//    len: i32,
+//    data: *mut RawInOut,
+//}
 
 impl<'a> Context {
     fn new() -> Self {
         Context {
             input: 0,
             output: 0,
+            requests: None,
+            responses: None
         }
     }
 
@@ -42,6 +72,26 @@ impl<'a> Context {
     fn get_input(&self) -> i32 {
         self.input
     }
+
+    fn append_request(&mut self, value: &str) {
+        self.requests.get_or_insert(vec![]).push(String::from(value));
+    }
+
+    fn get_requests(&mut self) -> Option<Vec<String>> {
+        self.requests.take()
+    }
+
+    fn append_response(&mut self, value: String) {
+        self.responses.get_or_insert(vec![]).push(value);
+    }
+
+    fn get_responses(&mut self) -> Option<Vec<String>> {
+        self.responses.take()
+    }
+
+    fn get_control_value(&self) -> i32 {
+        self.input + self.output as i32
+    }
 }
 
 #[no_mangle]
@@ -54,41 +104,90 @@ pub extern fn context_create() -> *mut Context {
 }
 
 #[no_mangle]
-pub extern fn context_close(ptr: *mut Context) {
-    if ptr.is_null() { return }
-    let ctx = unsafe { Box::from_raw(ptr); };
+pub extern fn context_close(ctx_ptr: *mut Context) {
+    if ctx_ptr.is_null() { return }
+    let ctx = unsafe { Box::from_raw(ctx_ptr); };
     debug!("context_close {:?}", ctx);
 }
 
 #[no_mangle]
-pub extern "C" fn context_set_input(ptr: *mut Context, value: i32) -> bool {
-    if ptr.is_null() {
-        false
-    } else {
-        let ctx = Context::from_ptr(ptr);
-        debug!("setting input {:?} before {:?}",value,  ctx);
-        match ctx.set_input(value) {
-            Ok(_) => {
-                debug!("setting input after {:?}", ctx);
-                true
-            },
-            Err(msg) => {
-                debug!(msg);
-                false
-            },
+pub extern "C" fn context_set_input(ctx_ptr: *mut Context, value: i32) -> bool {
+    let ctx = Context::from_ptr(ctx_ptr);
+    debug!("setting input {:?} before {:?}",value,  ctx);
+    match ctx.set_input(value) {
+        Ok(_) => {
+            debug!("setting input after {:?}", ctx);
+            true
+        },
+        Err(msg) => {
+            debug!(msg);
+            false
+        },
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn context_add_request(ctx_ptr: *mut Context, value: *const c_char) -> bool {
+    let c_str = unsafe {
+        assert!(!value.is_null());
+        CStr::from_ptr(value)
+    };
+
+    let value = c_str.to_str().unwrap();
+    let ctx = Context::from_ptr(ctx_ptr);
+    debug!("receive input {:?}: {}", ctx.get_control_value(), value);
+    ctx.append_request(value);
+    true
+}
+
+#[no_mangle]
+pub extern "C" fn context_execute(ctx_ptr: *mut Context) -> bool {
+    let ctx = Context::from_ptr(ctx_ptr);
+    debug!("context_execute {:?}", ctx.get_control_value());
+    match ctx.get_requests() {
+        Some(requests) => {
+            for (i, request) in requests.into_iter().enumerate() {
+                debug!("processing request {}", request);
+                let response = format!("response of {}", request);
+                ctx.append_response(response)
+            }
+        },
+        None => {}
+    }
+    true
+}
+
+#[no_mangle]
+pub extern "C" fn context_get_responses(ctx_ptr: *mut Context) -> *mut c_char {
+    let ctx = Context::from_ptr(ctx_ptr);
+
+    match ctx.get_responses() {
+        Some(responses) => {
+            let buffer = responses.join("\n");
+            let c_str_song = CString::new(buffer).unwrap();
+            c_str_song.into_raw()
+        },
+        _ => {
+            let c_str_song = CString::new("").unwrap();
+            c_str_song.into_raw()
         }
     }
 }
 
 #[no_mangle]
+pub extern "C" fn free_string(ptr: *mut c_char) -> bool {
+    assert!(!ptr.is_null());
+    unsafe {
+        CString::from_raw(ptr);
+    };
+    true
+}
+
+#[no_mangle]
 pub extern "C" fn context_get_input(ptr: *mut Context) -> i32 {
-    if ptr.is_null() {
-        0
-    } else {
-        let ctx = Context::from_ptr(ptr);
-        debug!("getting input as {:?}", ctx);
-        ctx.get_input()
-    }
+    let ctx = Context::from_ptr(ptr);
+    debug!("getting input as {:?}", ctx);
+    ctx.get_input()
 }
 
 #[repr(C)]
