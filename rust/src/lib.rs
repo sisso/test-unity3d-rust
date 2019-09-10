@@ -10,6 +10,12 @@ use std::ptr;
 use std::result::Result;
 use std::io::Write;
 
+#[repr(C)]
+pub struct ByteBuffer {
+    len: i32,
+    data: *mut u8,
+}
+
 enum Requests {
     SetValue,
     GetValue,
@@ -27,6 +33,8 @@ pub struct Context {
     output: u32,
     requests: Option<Vec<String>>,
     responses: Option<Vec<String>>,
+    byte_requests: Option<Vec<u8>>,
+    byte_responses: Option<Vec<u8>>,
 }
 
 //#[derive(Debug)]
@@ -49,13 +57,16 @@ impl<'a> Context {
             input: 0,
             output: 0,
             requests: None,
-            responses: None
+            responses: None,
+            byte_requests: None,
+            byte_responses: None
         }
     }
 
     fn from_ptr(ptr: *mut Context) -> &'a mut Context {
+        assert!(!ptr.is_null());
+
         unsafe {
-            assert!(!ptr.is_null());
             &mut *ptr
         }
     }
@@ -91,6 +102,14 @@ impl<'a> Context {
 
     fn get_control_value(&self) -> i32 {
         self.input + self.output as i32
+    }
+
+    fn append_byte_request(&mut self, value: Vec<u8>) {
+        self.byte_responses = Some(value);
+    }
+
+    fn get_byte_responses(&mut self) -> Option<Vec<u8>> {
+        self.byte_responses.take()
     }
 }
 
@@ -181,6 +200,41 @@ pub extern "C" fn free_string(ptr: *mut c_char) -> bool {
         CString::from_raw(ptr);
     };
     true
+}
+
+#[no_mangle]
+pub extern "C" fn context_add_byte_request(ctx_ptr: *mut Context, buffer: &ByteBuffer) -> bool {
+    debug!("context_add_byte_request - receiving bytes");
+
+    assert!(!buffer.data.is_null(), "buffer pointer could not be null");
+
+    let ref_data = unsafe { std::slice::from_raw_parts(buffer.data, buffer.len as usize) };
+    let own_data = ref_data.to_vec();
+
+    debug!("context_add_byte_request - adding into context");
+
+    let ctx = Context::from_ptr(ctx_ptr);
+    ctx.append_byte_request(own_data);
+
+    debug!("context_add_byte_request - done");
+    true
+}
+
+#[no_mangle]
+pub extern "C" fn context_get_byte_responses(ctx_ptr: *mut Context, callback: extern "stdcall" fn (ByteBuffer)) -> bool {
+    let ctx = Context::from_ptr(ctx_ptr);
+    match ctx.get_byte_responses() {
+        Some(mut bytes) => {
+            let buffer = ByteBuffer {
+                len: bytes.len() as i32,
+                data: bytes.as_mut_ptr()
+            };
+
+            callback(buffer);
+            true
+        },
+        None => false,
+    }
 }
 
 #[no_mangle]

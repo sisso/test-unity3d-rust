@@ -55,12 +55,12 @@ public class UseSum : MonoBehaviour
         {
             if (Input.GetMouseButtonDown(i))
             {
-                context.AddRequest("button "+i+" down");
+                context.AddRequest("button "+i+" down ção");
             }
 
             if (Input.GetMouseButtonUp(i))
             {
-                context.AddRequest("button "+i+" up");
+                context.AddRequest("button "+i+" up ü");
             }
         }
 
@@ -69,6 +69,17 @@ public class UseSum : MonoBehaviour
         var responses = context.GetResponses();
         foreach (var line in responses.Split('\n')) {
             Debug.Log("response " + line);
+        }
+
+        if (Input.GetKey(KeyCode.A))
+        {
+            Debug.Log("Sending bytes");
+            context.AddByteRequest(new byte[] { 0, 1, 2, 3 });
+            var bytes = context.GetByteRequest();
+            for (var i = 0; i < bytes.Length; i++)
+            {
+                Debug.Log("Receive bytes: " + i);
+            }
         }
     }
 }

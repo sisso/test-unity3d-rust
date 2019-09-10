@@ -9,9 +9,9 @@ namespace Rust
 {
     public interface ContextInput
     {
-    //    int GetKindId();
-    //    int GetMessageType();
-    //    int GetRequestId();
+        //    int GetKindId();
+        //    int GetMessageType();
+        //    int GetRequestId();
     }
 
     public class MessageDefinition
@@ -36,7 +36,8 @@ namespace Rust
         public const int KIND_EMPTY = 0;
         public const int KIND_STRING = 1;
 
-        private static MessageDefinition N(int messageId, int messageKind) {
+        private static MessageDefinition N(int messageId, int messageKind)
+        {
             return new MessageDefinition(messageId, messageKind);
         }
 
@@ -59,6 +60,13 @@ namespace Rust
 
     [StructLayout(LayoutKind.Sequential)]
     struct Buffer
+    {
+        public Int32 len;
+        public IntPtr ptr;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct ByteBuffer
     {
         public Int32 len;
         public IntPtr ptr;
@@ -165,7 +173,7 @@ namespace Rust
         {
             return Proxy.context_get_input(handler);
         }
-              
+
         public void AddRequest(string str)
         {
             if (!Proxy.context_add_request(handler, str))
@@ -187,6 +195,46 @@ namespace Rust
             {
                 Debug.LogWarning("Failed returned from FFI method");
             }
+        }
+
+        public void AddByteRequest(byte[] data)
+        {
+            IntPtr unmanagedArray = Marshal.AllocHGlobal(data.Length);
+            try
+            {
+                Marshal.Copy(data, 0, unmanagedArray, data.Length);
+
+                var buffer = new ByteBuffer();
+                buffer.len = data.Length;
+                buffer.ptr = unmanagedArray;
+                Proxy.context_add_byte_request(handler, buffer);
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(unmanagedArray);
+            }
+        }
+
+        public byte[] GetByteRequest()
+        {
+            byte[] data = null;
+
+            var result = Proxy.context_get_byte_responses(handler, (buffer) => {
+                data = new byte[buffer.len];
+
+                var pointer = buffer.ptr;
+                for (int i = 0; i < buffer.len; i++)
+                {
+                    byte b = Marshal.ReadByte(pointer);
+                    data[i] = b;
+                    pointer += 1;
+                }
+            });
+
+            if (result && data != null)
+                return data;
+            else
+                return new byte[0];
         }
 
         public void Dispose()
@@ -226,6 +274,11 @@ namespace Rust
         internal static extern FFIStringHandler context_get_responses(ContextHandler ptr);
         [DllImport("librustlib")]
         internal static extern bool free_string(IntPtr ptr);
+
+        [DllImport("librustlib")]
+        internal static extern bool context_add_byte_request(ContextHandler ptr, ByteBuffer bytes);
+        [DllImport("librustlib")]
+        internal static extern bool context_get_byte_responses(ContextHandler ptr, Action<ByteBuffer> callback);
 
         public static V2 Get()
         {
