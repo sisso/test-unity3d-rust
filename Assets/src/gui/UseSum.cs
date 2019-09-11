@@ -25,7 +25,7 @@ public class UseSum : MonoBehaviour
 
         Debug.Log("starting context");
         this.context = new Rust.Context();
-        Debug.Log("context created "+this.context);
+        //Debug.Log("context created "+this.context);
     }
 
     void Destroy()
@@ -68,18 +68,26 @@ public class UseSum : MonoBehaviour
 
         var responses = context.GetResponses();
         foreach (var line in responses.Split('\n')) {
+            if (line.Length == 0) continue;
+
             Debug.Log("response " + line);
         }
 
-        if (Input.GetKey(KeyCode.A))
+        if (state % 2 == 0)
         {
             Debug.Log("Sending bytes");
-            context.AddByteRequest(new byte[] { 0, 1, 2, 3 });
+            context.AddByteRequest(new byte[] { 5, 3, 1, 3 });
+        }
+        else
+        {
+            var buffer = "Receive bytes";
             var bytes = context.GetByteRequest();
             for (var i = 0; i < bytes.Length; i++)
             {
-                Debug.Log("Receive bytes: " + i);
+                buffer += " " + bytes[i];
             }
+
+            Debug.Log(buffer);
         }
     }
 }

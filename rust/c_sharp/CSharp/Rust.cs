@@ -1,9 +1,9 @@
-﻿using System.Collections;
+﻿using System;
+
+using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 using System.Runtime.InteropServices;
-using System;
 
 namespace Rust
 {
@@ -178,7 +178,7 @@ namespace Rust
         {
             if (!Proxy.context_add_request(handler, str))
             {
-                Debug.LogWarning("Failed returned from FFI method");
+                Console.WriteLine("Failed returned from FFI method");
             }
         }
 
@@ -193,49 +193,34 @@ namespace Rust
         {
             if (!Proxy.context_execute(handler))
             {
-                Debug.LogWarning("Failed returned from FFI method");
+                Console.WriteLine("Failed returned from FFI method");
             }
         }
 
         public void AddByteRequest(byte[] data)
         {
-            Proxy.context_add_byte_request(handler, data, data.Length);
+            IntPtr unmanagedArray = Marshal.AllocHGlobal(data.Length);
+            try
+            {
+                Marshal.Copy(data, 0, unmanagedArray, data.Length);
 
-            //GCHandle handle = GCHandle.Alloc(data, GCHandleType.Pinned);
-            //try
-            //{
-            //    IntPtr ptr = GCHandle.ToIntPtr(handle);
-            //    //var buffer = new ByteBuffer();
-            //    //buffer.len = data.Length;
-            //    //buffer.ptr = ptr;
-            //    Proxy.context_add_byte_request(handler, ptr, data.Length);
-            //}
-            //finally
-            //{
-            //    handle.Free();
-            //}
-
-            //IntPtr unmanagedArray = Marshal.AllocHGlobal(data.Length);
-            //try
-            //{
-            //    Marshal.Copy(data, 0, unmanagedArray, data.Length);
-
-            //    var buffer = new ByteBuffer();
-            //    buffer.len = data.Length;
-            //    buffer.ptr = unmanagedArray;
-            //    Proxy.context_add_byte_request(handler, buffer);
-            //}
-            //finally
-            //{
-            //    Marshal.FreeHGlobal(unmanagedArray);
-            //}
+                var buffer = new ByteBuffer();
+                buffer.len = data.Length;
+                buffer.ptr = unmanagedArray;
+                Proxy.context_add_byte_request(handler, buffer);
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(unmanagedArray);
+            }
         }
 
         public byte[] GetByteRequest()
         {
             byte[] data = null;
 
-            var result = Proxy.context_get_byte_responses(handler, (buffer) => {
+            var result = Proxy.context_get_byte_responses(handler, (buffer) =>
+            {
                 data = new byte[buffer.len];
 
                 var pointer = buffer.ptr;
@@ -292,7 +277,7 @@ namespace Rust
         internal static extern bool free_string(IntPtr ptr);
 
         [DllImport("librustlib")]
-        internal static extern bool context_add_byte_request(ContextHandler ptr, byte[] bytes, Int32 length);
+        internal static extern bool context_add_byte_request(ContextHandler ptr, ByteBuffer bytes);
         [DllImport("librustlib")]
         internal static extern bool context_get_byte_responses(ContextHandler ptr, Action<ByteBuffer> callback);
 

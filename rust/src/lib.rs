@@ -203,20 +203,17 @@ pub extern "C" fn free_string(ptr: *mut c_char) -> bool {
 }
 
 #[no_mangle]
-pub extern "C" fn context_add_byte_request(ctx_ptr: *mut Context, buffer: &ByteBuffer) -> bool {
-    debug!("context_add_byte_request - receiving bytes");
+pub extern "C" fn context_add_byte_request(ctx_ptr: *mut Context, buffer: *mut u8, length: i32) -> bool {
+    debug!("context_add_byte_request - receiving bytes of {:?}", length);
 
-    assert!(!buffer.data.is_null(), "buffer pointer could not be null");
+    assert!(!buffer.is_null(), "buffer pointer could not be null");
 
-    let ref_data = unsafe { std::slice::from_raw_parts(buffer.data, buffer.len as usize) };
+    let ref_data = unsafe { std::slice::from_raw_parts(buffer, length as usize) };
     let own_data = ref_data.to_vec();
-
-    debug!("context_add_byte_request - adding into context");
 
     let ctx = Context::from_ptr(ctx_ptr);
     ctx.append_byte_request(own_data);
 
-    debug!("context_add_byte_request - done");
     true
 }
 
