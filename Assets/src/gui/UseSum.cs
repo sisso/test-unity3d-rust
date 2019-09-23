@@ -26,6 +26,7 @@ public class UseSum : MonoBehaviour
         Debug.Log("starting context");
         this.context = new Rust.Context();
         //Debug.Log("context created "+this.context);
+
     }
 
     void Destroy()
@@ -47,6 +48,8 @@ public class UseSum : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        var buffer = "";
+
         // Debug.Log("Get value: " + context.GetInput());
         state += 1;
         context.SetInput(state);
@@ -55,7 +58,7 @@ public class UseSum : MonoBehaviour
         {
             if (Input.GetMouseButtonDown(i))
             {
-                context.AddRequest("button "+i+" down ção");
+                context.AddRequest("button "+i+" down AcciÃ³n");
             }
 
             if (Input.GetMouseButtonUp(i))
@@ -80,7 +83,7 @@ public class UseSum : MonoBehaviour
         }
         else
         {
-            var buffer = "Receive bytes";
+            buffer = "Receive bytes";
             var bytes = context.GetByteRequest();
             for (var i = 0; i < bytes.Length; i++)
             {
@@ -89,5 +92,18 @@ public class UseSum : MonoBehaviour
 
             Debug.Log(buffer);
         }
+
+        // this.context.GetMessages();
+
+        buffer = "";
+        var list_deleted = this.context.GetDeletedEntities();
+        foreach (var line in list_deleted)
+        {
+            buffer += line + ",";
+        }
+        Debug.Log("list_deleted: " + buffer);
+
+        Debug.Log("Running GetNewEntities");
+        this.context.GetNewEntities();
     }
 }

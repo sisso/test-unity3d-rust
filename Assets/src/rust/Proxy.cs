@@ -72,6 +72,38 @@ namespace Rust
         public IntPtr ptr;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    struct EntityComponent
+    {
+        public IntPtr label;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct Entity
+    {
+        public UInt32 id;
+        public V2 pos;
+        public UInt32 kind;
+        public IntPtr components;
+        public UInt32 components_length;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct OutputMessages
+    {
+        public IntPtr new_entities;
+        public UInt32 new_entities_length;
+        public IntPtr removed_entities;
+        public UInt32 removed_entities_length;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct FFIArray
+    {
+        public IntPtr ptr;
+        public UInt32 len;
+    }
+
     internal class FFIStringHandler : SafeHandle
     {
         public FFIStringHandler() : base(IntPtr.Zero, true)
@@ -101,38 +133,6 @@ namespace Rust
             return true;
         }
     }
-
-    //class FfiString
-    //{
-    //    private FFIStringHandler handler;
-    //    private string str;
-
-    //    public FfiString(byte length)
-    //    {
-    //        song = Native.theme_song_generate(length);
-    //    }
-
-    //    public override string ToString()
-    //    {
-    //        if (songString == null)
-    //        {
-    //            songString = song.AsString();
-    //        }
-    //        return songString;
-    //    }
-
-    //    public void Dispose()
-    //    {
-    //        song.Dispose();
-    //    }
-
-    //    static public void Main()
-    //    {
-    //        var song = new ThemeSong(5);
-    //        Console.WriteLine("{0}", song);
-    //    }
-    //}
-
 
     internal class ContextHandler : SafeHandle
     {
@@ -235,11 +235,11 @@ namespace Rust
         {
             byte[] data = null;
 
-            var result = Proxy.context_get_byte_responses(handler, (buffer) => {
-                data = new byte[buffer.len];
+            var result = Proxy.context_get_byte_responses(handler, (buffer, len) => {
+                data = new byte[len];
 
-                var pointer = buffer.ptr;
-                for (int i = 0; i < buffer.len; i++)
+                var pointer = buffer;
+                for (int i = 0; i < len; i++)
                 {
                     byte b = Marshal.ReadByte(pointer);
                     data[i] = b;
@@ -252,6 +252,67 @@ namespace Rust
             else
                 return new byte[0];
         }
+
+        public void GetMessages()
+        {
+            Proxy.context_get_output_messages(handler, (messages) =>
+            {
+                Debug.Log("GetMessages new entities length: " + messages.new_entities_length);
+                Debug.Log("GetMessages removed entities length: " + messages.removed_entities_length);
+            });
+        }
+
+        public List<UInt32> GetDeletedEntities()
+        {
+            var list = new List<UInt32>();
+
+            Proxy.context_get_removed_entities(handler, (array) =>
+            {
+                int size = Marshal.SizeOf<UInt32>();
+                var pointer = array.ptr;
+
+                for (int i = 0; i < array.len; i++)
+                {
+                    var v = Marshal.PtrToStructure<UInt32>(pointer);
+                    list.Add(v);
+                    pointer += size;
+                }
+            });
+
+            return list;
+        }
+
+
+        public List<String> GetNewEntities()
+        {
+            var list = new List<String>();
+
+            Proxy.context_get_new_entities(handler, (array) =>
+            {
+                int size_entity = Marshal.SizeOf<Entity>();
+                int size_component = Marshal.SizeOf<EntityComponent>();
+                var pointer = array.ptr;
+
+                for (int i = 0; i < array.len; i++)
+                {
+                    var v = Marshal.PtrToStructure<Entity>(pointer);
+                    Debug.Log("GetNewEntities - " + v.id + "/" + v.kind + " (" + v.pos.x + ", "+ v.pos.y + ")");
+                    Debug.Log(" - components length: " + v.components_length);
+                    var pointer_components = v.components;
+                    for (int j = 0; j < v.components_length ; j++)
+                    {
+                        var c = Marshal.PtrToStructure<EntityComponent>(pointer_components);
+                        var str = Marshal.PtrToStringAuto(c.label);
+                        Debug.Log("   - " + str);
+                        pointer_components += size_component;
+                    }
+                    pointer += size_entity;
+                }
+            });
+
+            return list;
+        }
+
 
         public void Dispose()
         {
@@ -294,7 +355,16 @@ namespace Rust
         [DllImport("librustlib")]
         internal static extern bool context_add_byte_request(ContextHandler ptr, byte[] bytes, Int32 length);
         [DllImport("librustlib")]
-        internal static extern bool context_get_byte_responses(ContextHandler ptr, Action<ByteBuffer> callback);
+        internal static extern bool context_get_byte_responses(ContextHandler ptr, Action<IntPtr, Int32> callback);
+
+        [DllImport("librustlib")]
+        internal static extern bool context_get_output_messages(ContextHandler ptr, Action<OutputMessages> callback);
+
+        [DllImport("librustlib")]
+        internal static extern bool context_get_new_entities(ContextHandler ptr, Action<FFIArray> callback);
+
+        [DllImport("librustlib")]
+        internal static extern bool context_get_removed_entities(ContextHandler ptr, Action<FFIArray> callback);
 
         public static V2 Get()
         {

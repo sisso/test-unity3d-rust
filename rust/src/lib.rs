@@ -37,20 +37,6 @@ pub struct Context {
     byte_responses: Option<Vec<u8>>,
 }
 
-//#[derive(Debug)]
-//struct RawInOut {
-//    data_kind: u32,
-//    message_kind: u32,
-//    request_id: u32,
-//    bytes: *const u8,
-//}
-//
-//#[derive(Debug)]
-//struct RawInOutList {
-//    len: i32,
-//    data: *mut RawInOut,
-//}
-
 impl<'a> Context {
     fn new() -> Self {
         Context {
@@ -218,16 +204,11 @@ pub extern "C" fn context_add_byte_request(ctx_ptr: *mut Context, buffer: *mut u
 }
 
 #[no_mangle]
-pub extern "C" fn context_get_byte_responses(ctx_ptr: *mut Context, callback: extern "stdcall" fn (ByteBuffer)) -> bool {
+pub extern "C" fn context_get_byte_responses(ctx_ptr: *mut Context, callback: extern "stdcall" fn (*mut u8, i32)) -> bool {
     let ctx = Context::from_ptr(ctx_ptr);
     match ctx.get_byte_responses() {
         Some(mut bytes) => {
-            let buffer = ByteBuffer {
-                len: bytes.len() as i32,
-                data: bytes.as_mut_ptr()
-            };
-
-            callback(buffer);
+            callback(bytes.as_mut_ptr(), bytes.len() as i32);
             true
         },
         None => false,
@@ -252,6 +233,149 @@ struct Buffer {
     len: i32,
     data: *mut V2,
 }
+
+#[repr(C)]
+pub struct Component {
+    label: *mut c_char
+}
+
+#[repr(C)]
+pub struct Entity {
+    id: u32,
+    pos: V2,
+    kind: u32,
+    components: *mut Component,
+    components_length: u32,
+}
+
+#[repr(C)]
+pub struct OutputMessages {
+    new_entities: *mut Entity,
+    new_entities_length: u32,
+    removed_entities: *mut u32,
+    removed_entities_length: u32,
+}
+
+#[repr(C)]
+pub struct FFIArray<T> {
+    ptr: *const T,
+    len: u32
+}
+
+#[no_mangle]
+pub extern "C" fn context_get_new_entities(ctx_ptr: *mut Context, callback: extern "stdcall" fn (FFIArray<Entity>)) -> bool {
+    let mut new_entities = vec![
+        Entity {
+            id: 0,
+            pos: V2 {
+                x: 0,
+                y: 0
+            },
+            kind: 1,
+            components: vec![
+                Component {
+                    label: CString::new("engine").unwrap().into_raw()
+                },
+                Component {
+                    label: CString::new("weapon").unwrap().into_raw()
+                },
+            ].as_mut_ptr(),
+            components_length: 2,
+        },
+        Entity {
+            id: 2,
+            pos: V2 {
+                x: 1,
+                y: 2
+            },
+            kind: 3,
+            components: vec![
+                Component {
+                    label: CString::new("sensors").unwrap().into_raw()
+                }
+            ].as_mut_ptr(),
+            components_length: 1,
+        },
+    ];
+
+    let len = new_entities.len() as u32;
+
+    callback(
+        FFIArray {
+            ptr: new_entities.as_mut_ptr(),
+            len: len
+        }
+    );
+
+    true
+}
+
+#[no_mangle]
+pub extern "C" fn context_get_removed_entities(ctx_ptr: *mut Context, callback: extern "stdcall" fn (FFIArray<u32>)) -> bool {
+    callback(
+        FFIArray {
+            ptr: vec![0, 3, 4, 5].as_mut_ptr(),
+            len: 4
+        }
+    );
+    true
+}
+
+#[no_mangle]
+pub extern "C" fn context_get_output_messages(ctx_ptr: *mut Context, callback: extern "stdcall" fn (*mut OutputMessages)) -> bool {
+    let ctx = Context::from_ptr(ctx_ptr);
+
+    let mut new_entities = vec![
+        Entity {
+            id: 0,
+            pos: V2 {
+                x: 0,
+                y: 0
+            },
+            kind: 0,
+            components: vec![
+                    Component {
+                        label: CString::new("engine").unwrap().into_raw()
+                    },
+                    Component {
+                        label: CString::new("weapon").unwrap().into_raw()
+                    },
+            ].as_mut_ptr(),
+            components_length: 2,
+        },
+        Entity {
+            id: 1,
+            pos: V2 {
+                x: 1,
+                y: 2
+            },
+            kind: 1,
+            components: vec![
+                    Component {
+                        label: CString::new("sensors").unwrap().into_raw()
+                    }
+            ].as_mut_ptr(),
+            components_length: 1,
+        },
+    ];
+
+    let mut output = OutputMessages {
+        new_entities: new_entities.as_mut_ptr(),
+        new_entities_length: 0,
+        removed_entities: vec![3].as_mut_ptr(),
+        removed_entities_length: 0
+    };
+
+    // convert to a pointer and send to callback
+    let ptr = Box::into_raw(Box::new(output));
+    callback(ptr);
+
+    // restore box to be free
+//    let _ = unsafe { Box::from_raw(ptr) };
+
+    true
+}
+
 
 #[no_mangle]
 pub extern "C" fn get_simple_struct() -> V2 {
