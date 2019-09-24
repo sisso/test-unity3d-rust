@@ -38,6 +38,11 @@ namespace testcsharprust
         internal static extern bool context_set_struct_array(ContextHandler ptr, V2[] buffer, UInt32 len);
         [DllImport("/home/sisso/workspace/test-unity3d-rust/rust/target/debug/librustlib.so", CharSet = CharSet.Unicode)]
         internal static extern bool context_get_struct_array(ContextHandler ptr, Action<IntPtr, UInt32> callback);
+
+        [DllImport("/home/sisso/workspace/test-unity3d-rust/rust/target/debug/librustlib.so")]
+        internal static extern FFIArray context_get_array_no_callback(ContextHandler ptr);
+        [DllImport("/home/sisso/workspace/test-unity3d-rust/rust/target/debug/librustlib.so", CharSet = CharSet.Unicode)]
+        internal static extern bool free_array(FFIArray handler);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -50,6 +55,13 @@ namespace testcsharprust
         {
             return string.Format("[V2: x={0}, y={1}]", x, y);
         }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct FFIArray
+    {
+        public IntPtr ptr;
+        public UInt32 len;
     }
 
     internal class FFIStringHandler : SafeHandle
@@ -162,6 +174,27 @@ namespace testcsharprust
             return bytes;
         }
 
+        public byte[] GetArray2()
+        {
+            var array = FFI.context_get_array_no_callback(this.handler);
+            try
+            {
+                byte[] bytes = new byte[array.len];
+                var ptr = array.ptr;
+                for (int i = 0; i < array.len; i++)
+                {
+                    byte b = Marshal.ReadByte(ptr);
+                    bytes[i] = b;
+                    ptr += 1;
+                }
+                return bytes;
+            }
+            finally
+            {
+                FFI.free_array(array);
+            }
+        }
+
         public void SetStructArray(V2[] array)
         {
             FFI.context_set_struct_array(this.handler, array, Convert.ToUInt32(array.Length));
@@ -244,6 +277,25 @@ namespace testcsharprust
             Assert(value[4] == 7);
         }
 
+        static void SendAndReceiveArray2Test(Context context)
+        {
+            byte[] bytes = new byte[] { 4, 3, 2, 1, 7 };
+            context.SetArray(bytes);
+
+            var value = context.GetArray2();
+            var str = "[";
+            for (int i = 0; i < value.Length; i++)
+            {
+                str += value[i] + (i == value.Length - 1 ? "" : ",");
+            }
+            str += "]";
+
+            Console.WriteLine("SendAndReceiveArray2Test receive " + str);
+            Assert(value.Length == 5);
+            Assert(value[0] == 4);
+            Assert(value[4] == 7);
+        }
+
 
         static void SendAndReceiveStructArrayTest(Context context)
         {
@@ -272,6 +324,7 @@ namespace testcsharprust
             SendAndReceiveStringTest(context);
             SendAndReceiveStructTest(context);
             SendAndReceiveArrayTest(context);
+            SendAndReceiveArray2Test(context);
             SendAndReceiveStructArrayTest(context);
 
             Console.WriteLine("Done");

@@ -263,6 +263,31 @@ pub extern "C" fn context_get_array(ctx_ptr: *mut Context, callback: extern "std
     }
 }
 
+///
+/// context_free_array need to be called to release the memory
+///
+#[no_mangle]
+extern "C" fn context_get_array_no_callback(ctx_ptr: *mut Context) -> FFIArray {
+    let ctx = Context::from_ptr(ctx_ptr);
+    let mut value = ctx.array.take().unwrap_or(vec![]);
+    debug!("context_get_array_no_callback {:?}: {:?}", ctx.get_control_value(), value);
+    let ptr = value.as_mut_ptr();
+    let len = value.len() as u32;
+    std::mem::forget(value);
+    FFIArray { len, ptr }
+}
+
+#[no_mangle]
+extern "C" fn free_array(array: FFIArray) {
+    let sl = unsafe { std::slice::from_raw_parts_mut(array.ptr, array.len as usize) };
+    let ptr = sl.as_mut_ptr();
+    let value  = unsafe {
+        Box::from_raw(ptr)
+    };
+
+    debug!("free_array {:?}", value);
+}
+
 #[no_mangle]
 pub extern "C" fn context_set_struct_array(ctx_ptr: *mut Context, buffer: *mut V2, length: u32) -> bool {
     let ctx = Context::from_ptr(ctx_ptr);
@@ -366,62 +391,14 @@ pub struct OutputMessages {
 }
 
 #[repr(C)]
-pub struct FFIArray<T> {
+pub struct FFIArray {
     len: u32,
-    ptr: *const T,
+    ptr: *mut u8,
 }
 
 #[no_mangle]
 pub extern fn add_numbers(number1: i32, number2: i32) -> i32 {
     number1 + number2
-}
-
-#[no_mangle]
-pub extern "C" fn context_get_new_entities(ctx_ptr: *mut Context, callback: extern "stdcall" fn (FFIArray<Entity>)) -> bool {
-    let mut new_entities = vec![
-        Entity {
-            id: 0,
-            pos: V2 {
-                x: 0,
-                y: 0
-            },
-            kind: 1,
-            components: vec![
-                Component {
-                    label: CString::new("engine").unwrap().into_raw()
-                },
-                Component {
-                    label: CString::new("weapon").unwrap().into_raw()
-                },
-            ].as_mut_ptr(),
-            components_length: 2,
-        },
-        Entity {
-            id: 2,
-            pos: V2 {
-                x: 1,
-                y: 2
-            },
-            kind: 3,
-            components: vec![
-                Component {
-                    label: CString::new("sensors").unwrap().into_raw()
-                }
-            ].as_mut_ptr(),
-            components_length: 1,
-        },
-    ];
-
-    let len = new_entities.len() as u32;
-
-    callback(
-        FFIArray {
-            ptr: new_entities.as_mut_ptr(),
-            len: len
-        }
-    );
-
-    true
 }
 
 #[no_mangle]
