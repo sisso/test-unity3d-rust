@@ -40,9 +40,21 @@ namespace testcsharprust
         internal static extern bool context_get_struct_array(ContextHandler ptr, Action<IntPtr, UInt32> callback);
 
         [DllImport("/home/sisso/workspace/test-unity3d-rust/rust/target/debug/librustlib.so")]
-        internal static extern FFIArray context_get_array_no_callback(ContextHandler ptr);
+        internal static extern bool context_set_people(ContextHandler ptr, FFIPerson[] buffer, UInt32 len);
         [DllImport("/home/sisso/workspace/test-unity3d-rust/rust/target/debug/librustlib.so", CharSet = CharSet.Unicode)]
-        internal static extern bool free_array(FFIArray handler);
+        internal static extern bool context_get_people(ContextHandler ptr, Action<IntPtr, UInt32> callback);
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct FFIPerson
+    {
+        public UInt32 id;
+        public string name;
+
+        public override string ToString()
+        {
+            return string.Format("[FFIPerson: id={0}, name={1}]", id, name);
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -174,27 +186,6 @@ namespace testcsharprust
             return bytes;
         }
 
-        public byte[] GetArray2()
-        {
-            var array = FFI.context_get_array_no_callback(this.handler);
-            try
-            {
-                byte[] bytes = new byte[array.len];
-                var ptr = array.ptr;
-                for (int i = 0; i < array.len; i++)
-                {
-                    byte b = Marshal.ReadByte(ptr);
-                    bytes[i] = b;
-                    ptr += 1;
-                }
-                return bytes;
-            }
-            finally
-            {
-                FFI.free_array(array);
-            }
-        }
-
         public void SetStructArray(V2[] array)
         {
             FFI.context_set_struct_array(this.handler, array, Convert.ToUInt32(array.Length));
@@ -212,6 +203,31 @@ namespace testcsharprust
                 for (int i = 0; i < length; i++)
                 {
                     V2 value = Marshal.PtrToStructure<V2>(ptr);
+                    array[i] = value;
+                    ptr += size;
+                }
+            });
+
+            return array;
+        }
+
+        public void SetPeople(FFIPerson[] people)
+        {
+            FFI.context_set_people(this.handler, people, Convert.ToUInt32(people.Length));
+        }
+
+        public FFIPerson[] GetPeople()
+        {
+            FFIPerson[] array = new FFIPerson[0] { };
+
+            FFI.context_get_people(this.handler, (ptr, length) =>
+            {
+                var size = Marshal.SizeOf<FFIPerson>();
+                array = new FFIPerson[length];
+
+                for (int i = 0; i < length; i++)
+                {
+                    FFIPerson value = Marshal.PtrToStructure<FFIPerson>(ptr);
                     array[i] = value;
                     ptr += size;
                 }
@@ -277,26 +293,6 @@ namespace testcsharprust
             Assert(value[4] == 7);
         }
 
-        static void SendAndReceiveArray2Test(Context context)
-        {
-            byte[] bytes = new byte[] { 4, 3, 2, 1, 7 };
-            context.SetArray(bytes);
-
-            var value = context.GetArray2();
-            var str = "[";
-            for (int i = 0; i < value.Length; i++)
-            {
-                str += value[i] + (i == value.Length - 1 ? "" : ",");
-            }
-            str += "]";
-
-            Console.WriteLine("SendAndReceiveArray2Test receive " + str);
-            Assert(value.Length == 5);
-            Assert(value[0] == 4);
-            Assert(value[4] == 7);
-        }
-
-
         static void SendAndReceiveStructArrayTest(Context context)
         {
             V2[] array = new V2[] { new V2 { x = 1, y = 2 }, new V2 { x = 3, y = 4 } };
@@ -316,6 +312,28 @@ namespace testcsharprust
             Assert(value[1].y == 4);
         }
 
+        static void SendAndReceivePeopleTest(Context context)
+        {
+            FFIPerson[] array = new FFIPerson[] {
+                new FFIPerson { id = 0, name = "Roger" },
+                new FFIPerson { id = 1, name = "John" },
+            };
+            context.SetPeople(array);
+
+            var value = context.GetPeople();
+            var str = "[";
+            for (int i = 0; i < value.Length; i++)
+            {
+                str += value[i] + (i == value.Length - 1 ? "" : ",");
+            }
+            str += "]";
+
+            Console.WriteLine("SendAndReceivePeopleTest receive " + str);
+            Assert(value.Length == 2);
+            Assert(value[0].id == 0);
+            Assert(value[1].name == "John");
+        }
+
         public static void Main (string[] args)
 		{
             AddNumberTest();
@@ -324,8 +342,8 @@ namespace testcsharprust
             SendAndReceiveStringTest(context);
             SendAndReceiveStructTest(context);
             SendAndReceiveArrayTest(context);
-            SendAndReceiveArray2Test(context);
             SendAndReceiveStructArrayTest(context);
+            SendAndReceivePeopleTest(context);
 
             Console.WriteLine("Done");
         }

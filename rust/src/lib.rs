@@ -3,7 +3,7 @@ mod debug;
 
 use std::ffi::CString;
 use std::ffi::CStr;
-use std::mem::{drop, transmute};
+use std::mem;
 use std::net::UdpSocket;
 use std::os::raw::c_char;
 use std::ptr;
@@ -39,6 +39,7 @@ pub struct Context {
     v2: Option<V2>,
     array: Option<Vec<u8>>,
     v2_array: Option<Vec<V2>>,
+    people: Vec<Person>
 }
 
 impl<'a> Context {
@@ -53,7 +54,8 @@ impl<'a> Context {
             string: None,
             v2: None,
             array: None,
-            v2_array: None
+            v2_array: None,
+            people: vec![]
         }
     }
 
@@ -263,31 +265,6 @@ pub extern "C" fn context_get_array(ctx_ptr: *mut Context, callback: extern "std
     }
 }
 
-///
-/// context_free_array need to be called to release the memory
-///
-#[no_mangle]
-extern "C" fn context_get_array_no_callback(ctx_ptr: *mut Context) -> FFIArray {
-    let ctx = Context::from_ptr(ctx_ptr);
-    let mut value = ctx.array.take().unwrap_or(vec![]);
-    debug!("context_get_array_no_callback {:?}: {:?}", ctx.get_control_value(), value);
-    let ptr = value.as_mut_ptr();
-    let len = value.len() as u32;
-    std::mem::forget(value);
-    FFIArray { len, ptr }
-}
-
-#[no_mangle]
-extern "C" fn free_array(array: FFIArray) {
-    let sl = unsafe { std::slice::from_raw_parts_mut(array.ptr, array.len as usize) };
-    let ptr = sl.as_mut_ptr();
-    let value  = unsafe {
-        Box::from_raw(ptr)
-    };
-
-    debug!("free_array {:?}", value);
-}
-
 #[no_mangle]
 pub extern "C" fn context_set_struct_array(ctx_ptr: *mut Context, buffer: *mut V2, length: u32) -> bool {
     let ctx = Context::from_ptr(ctx_ptr);
@@ -310,6 +287,49 @@ pub extern "C" fn context_get_struct_array(ctx_ptr: *mut Context, callback: exte
         },
         None => false,
     }
+}
+
+#[no_mangle]
+pub extern "C" fn context_set_people(ctx_ptr: *mut Context, buffer: *mut FFIPerson, length: u32) -> bool {
+    let ctx = Context::from_ptr(ctx_ptr);
+    let ref_data = unsafe { std::slice::from_raw_parts(buffer, length as usize) };
+    debug!("context_set_persons {:?}: {:?}", ctx.get_control_value(), ref_data);
+
+    let people = ref_data.iter().map(|ffi_person| {
+        let c_str = unsafe {
+            assert!(!ffi_person.name.is_null());
+            CStr::from_ptr(ffi_person.name)
+        };
+
+        let string = c_str.to_str().unwrap().to_string();
+
+        Person {
+            id: ffi_person.id,
+            name: string
+        }
+    }).collect();
+
+    ctx.people = people;
+    true
+}
+
+#[no_mangle]
+pub extern "C" fn context_get_people(ctx_ptr: *mut Context, callback: extern "stdcall" fn (*mut FFIPerson, u32)) -> bool {
+    let mut ctx = Context::from_ptr(ctx_ptr);
+
+    let people = mem::replace(&mut ctx.people, vec![]);
+    let len= people.len() as u32;
+
+    let mut people_ffi = people.into_iter().map(|person|{
+        FFIPerson {
+            id: person.id,
+            name: CString::new(person.name).unwrap().into_raw()
+        }
+    }).collect::<Vec<_>>();
+
+    callback(people_ffi.as_mut_ptr(), len);
+
+    true
 }
 
 #[no_mangle]
@@ -362,10 +382,17 @@ pub struct V2 {
     pub y: i32,
 }
 
+#[derive(Debug)]
+pub struct Person {
+    pub id: u32,
+    pub name: String
+}
+
 #[repr(C)]
-struct Buffer {
-    len: i32,
-    data: *mut V2,
+#[derive(Debug)]
+pub struct FFIPerson {
+    pub id: u32,
+    pub name: *mut c_char,
 }
 
 #[repr(C)]
@@ -390,120 +417,9 @@ pub struct OutputMessages {
     removed_entities_length: u32,
 }
 
-#[repr(C)]
-pub struct FFIArray {
-    len: u32,
-    ptr: *mut u8,
-}
-
 #[no_mangle]
 pub extern fn add_numbers(number1: i32, number2: i32) -> i32 {
     number1 + number2
-}
-
-#[no_mangle]
-pub extern "C" fn context_get_removed_entities(ctx_ptr: *mut Context, callback: extern "stdcall" fn (FFIArray<u32>)) -> bool {
-    callback(
-        FFIArray {
-            ptr: vec![0, 3, 4, 5].as_mut_ptr(),
-            len: 4
-        }
-    );
-    true
-}
-
-#[no_mangle]
-pub extern "C" fn context_get_output_messages(ctx_ptr: *mut Context, callback: extern "stdcall" fn (*mut OutputMessages)) -> bool {
-    let ctx = Context::from_ptr(ctx_ptr);
-
-    let mut new_entities = vec![
-        Entity {
-            id: 0,
-            pos: V2 {
-                x: 0,
-                y: 0
-            },
-            kind: 0,
-            components: vec![
-                    Component {
-                        label: CString::new("engine").unwrap().into_raw()
-                    },
-                    Component {
-                        label: CString::new("weapon").unwrap().into_raw()
-                    },
-            ].as_mut_ptr(),
-            components_length: 2,
-        },
-        Entity {
-            id: 1,
-            pos: V2 {
-                x: 1,
-                y: 2
-            },
-            kind: 1,
-            components: vec![
-                    Component {
-                        label: CString::new("sensors").unwrap().into_raw()
-                    }
-            ].as_mut_ptr(),
-            components_length: 1,
-        },
-    ];
-
-    let mut output = OutputMessages {
-        new_entities: new_entities.as_mut_ptr(),
-        new_entities_length: 0,
-        removed_entities: vec![3].as_mut_ptr(),
-        removed_entities_length: 0
-    };
-
-    // convert to a pointer and send to callback
-    let ptr = Box::into_raw(Box::new(output));
-    callback(ptr);
-
-    // restore box to be free
-//    let _ = unsafe { Box::from_raw(ptr) };
-
-    true
-}
-
-
-#[no_mangle]
-pub extern "C" fn get_simple_struct() -> V2 {
-    V2 {
-        x: 1,
-        y: 2
-    }
-}
-
-//#[no_mangle]
-//extern "C" fn get_vectors(ptr: *mut *const V2) -> bool {
-////    let list: [V2; 2] = [V2 { x: 0, y: 1 }, V2 { x: 1, y: 0 }];
-////
-////    unsafe {
-////        *ptr = list.as_ptr();
-////    }
-////
-////    true
-//    false
-//}
-
-#[no_mangle]
-extern "C" fn generate_data() -> Buffer {
-    let mut buf = vec![V2 { x: 1, y: 0 }, V2 { x: 2, y: 0}].into_boxed_slice();
-    let data = buf.as_mut_ptr();
-    let len = buf.len() as i32;
-    std::mem::forget(buf);
-    Buffer { len, data }
-}
-
-#[no_mangle]
-extern "C" fn free_buf(buf: Buffer) {
-    let s = unsafe { std::slice::from_raw_parts_mut(buf.data, buf.len as usize) };
-    let s = s.as_mut_ptr();
-    unsafe {
-        Box::from_raw(s);
-    }
 }
 
 #[cfg(test)]
