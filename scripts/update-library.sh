@@ -7,6 +7,7 @@ WORK_DIR="$(pwd)"
 (
   cd "$WORK_DIR/rust"
   cargo build --release
+  cargo build
 )
 
 source="$WORK_DIR/rust/target/release/librustlib.so"

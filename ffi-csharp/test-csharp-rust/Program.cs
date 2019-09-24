@@ -40,7 +40,7 @@ namespace testcsharprust
         internal static extern bool context_get_struct_array(ContextHandler ptr, Action<IntPtr, UInt32> callback);
 
         [DllImport("/home/sisso/workspace/test-unity3d-rust/rust/target/debug/librustlib.so")]
-        internal static extern bool context_set_people(ContextHandler ptr, FFIPerson[] buffer, UInt32 len);
+        internal static extern bool context_set_people(ContextHandler ptr, [In] FFIPerson[] buffer, UInt32 len);
         [DllImport("/home/sisso/workspace/test-unity3d-rust/rust/target/debug/librustlib.so", CharSet = CharSet.Unicode)]
         internal static extern bool context_get_people(ContextHandler ptr, Action<IntPtr, UInt32> callback);
     }
@@ -49,11 +49,25 @@ namespace testcsharprust
     public struct FFIPerson
     {
         public UInt32 id;
+        [MarshalAs(UnmanagedType.LPWStr)]
+        public string name;
+        public FFIAddress[] addresses;
+
+        public override string ToString()
+        {
+            return string.Format("[FFIPerson: id={0}, name={1}, addresses={2}]", id, name, addresses);
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct FFIAddress
+    {
+        [MarshalAs(UnmanagedType.LPWStr)]
         public string name;
 
         public override string ToString()
         {
-            return string.Format("[FFIPerson: id={0}, name={1}]", id, name);
+            return string.Format("[FFIAddress: name={0}]", name);
         }
     }
 
@@ -315,8 +329,14 @@ namespace testcsharprust
         static void SendAndReceivePeopleTest(Context context)
         {
             FFIPerson[] array = new FFIPerson[] {
-                new FFIPerson { id = 0, name = "Roger" },
-                new FFIPerson { id = 1, name = "John" },
+                new FFIPerson { id = 0, name = "Roger", addresses = new FFIAddress[] {
+                    new FFIAddress { name = "Street one" },
+                }}
+                //,
+                //new FFIPerson { id = 1, name = "John", addresses = new FFIAddress[] {
+                //    new FFIAddress { name = "Strasse" },
+                //    new FFIAddress { name = "Street two" },
+                //}},
             };
             context.SetPeople(array);
 

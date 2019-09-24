@@ -1,40 +1,12 @@
+use std::ffi::{CString, CStr};
+use std::os::raw::c_char;
+
 #[macro_use]
 mod debug;
 
-use std::ffi::CString;
-use std::ffi::CStr;
-use std::mem;
-use std::net::UdpSocket;
-use std::os::raw::c_char;
-use std::ptr;
-use std::result::Result;
-use std::io::Write;
-
-#[repr(C)]
-pub struct ByteBuffer {
-    len: i32,
-    data: *mut u8,
-}
-
-enum Requests {
-    SetValue,
-    GetValue,
-}
-
-enum Responses {
-    Value {
-        result: u32,
-    }
-}
-
 #[derive(Debug)]
 pub struct Context {
-    input: i32,
-    output: u32,
-    requests: Option<Vec<String>>,
-    responses: Option<Vec<String>>,
-    byte_requests: Option<Vec<u8>>,
-    byte_responses: Option<Vec<u8>>,
+    control: i32,
     string: Option<String>,
     v2: Option<V2>,
     array: Option<Vec<u8>>,
@@ -45,12 +17,7 @@ pub struct Context {
 impl<'a> Context {
     fn new() -> Self {
         Context {
-            input: 0,
-            output: 0,
-            requests: None,
-            responses: None,
-            byte_requests: None,
-            byte_responses: None,
+            control: 1,
             string: None,
             v2: None,
             array: None,
@@ -67,45 +34,9 @@ impl<'a> Context {
         }
     }
 
-    fn set_input(&mut self, value: i32) -> Result<(), String> {
-        if value < 0 {
-            Err(format!("invalid input, value can not be lower that 0"))
-        } else {
-            self.input = value;
-            Ok(())
-        }
-    }
-
-    fn get_input(&self) -> i32 {
-        self.input
-    }
-
-    fn append_request(&mut self, value: &str) {
-        self.requests.get_or_insert(vec![]).push(String::from(value));
-    }
-
-    fn get_requests(&mut self) -> Option<Vec<String>> {
-        self.requests.take()
-    }
-
-    fn append_response(&mut self, value: String) {
-        self.responses.get_or_insert(vec![]).push(value);
-    }
-
-    fn get_responses(&mut self) -> Option<Vec<String>> {
-        self.responses.take()
-    }
 
     fn get_control_value(&self) -> i32 {
-        self.input + self.output as i32
-    }
-
-    fn append_byte_request(&mut self, value: Vec<u8>) {
-        self.byte_responses = Some(value);
-    }
-
-    fn get_byte_responses(&mut self) -> Option<Vec<u8>> {
-        self.byte_responses.take()
+        self.control
     }
 }
 
@@ -124,71 +55,6 @@ pub extern fn context_close(ctx_ptr: *mut Context) {
     let ctx = unsafe { Box::from_raw(ctx_ptr); };
     debug!("context_close {:?}", ctx);
 }
-
-#[no_mangle]
-pub extern "C" fn context_set_input(ctx_ptr: *mut Context, value: i32) -> bool {
-    let ctx = Context::from_ptr(ctx_ptr);
-    debug!("setting input {:?} before {:?}",value,  ctx);
-    match ctx.set_input(value) {
-        Ok(_) => {
-            debug!("setting input after {:?}", ctx);
-            true
-        },
-        Err(msg) => {
-            debug!(msg);
-            false
-        },
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn context_add_request(ctx_ptr: *mut Context, value: *const c_char) -> bool {
-    let c_str = unsafe {
-        assert!(!value.is_null());
-        CStr::from_ptr(value)
-    };
-
-    let value = c_str.to_str().unwrap();
-    let ctx = Context::from_ptr(ctx_ptr);
-    debug!("receive input {:?}: {}", ctx.get_control_value(), value);
-    ctx.append_request(value);
-    true
-}
-
-#[no_mangle]
-pub extern "C" fn context_execute(ctx_ptr: *mut Context) -> bool {
-    let ctx = Context::from_ptr(ctx_ptr);
-    debug!("context_execute {:?}", ctx.get_control_value());
-    match ctx.get_requests() {
-        Some(requests) => {
-            for (i, request) in requests.into_iter().enumerate() {
-                debug!("processing request {}", request);
-                let response = format!("response of {}", request);
-                ctx.append_response(response)
-            }
-        },
-        None => {}
-    }
-    true
-}
-
-#[no_mangle]
-pub extern "C" fn context_get_responses(ctx_ptr: *mut Context) -> *mut c_char {
-    let ctx = Context::from_ptr(ctx_ptr);
-
-    match ctx.get_responses() {
-        Some(responses) => {
-            let buffer = responses.join("\n");
-            let c_str_song = CString::new(buffer).unwrap();
-            c_str_song.into_raw()
-        },
-        _ => {
-            let c_str_song = CString::new("").unwrap();
-            c_str_song.into_raw()
-        }
-    }
-}
-
 
 #[no_mangle]
 pub extern "C" fn context_set_string(ctx_ptr: *mut Context, value: *const c_char) -> bool {
@@ -268,7 +134,7 @@ pub extern "C" fn context_get_array(ctx_ptr: *mut Context, callback: extern "std
 #[no_mangle]
 pub extern "C" fn context_set_struct_array(ctx_ptr: *mut Context, buffer: *mut V2, length: u32) -> bool {
     let ctx = Context::from_ptr(ctx_ptr);
-    let ref_data = unsafe { std::slice::from_raw_parts(buffer, length as usize) };
+    let ref_data = to_slice(buffer, length);
     let value = ref_data.to_vec();
     debug!("context_set_struct_array {:?}: {:?}", ctx.get_control_value(), value);
     ctx.v2_array = Some(value);
@@ -290,22 +156,20 @@ pub extern "C" fn context_get_struct_array(ctx_ptr: *mut Context, callback: exte
 }
 
 #[no_mangle]
-pub extern "C" fn context_set_people(ctx_ptr: *mut Context, buffer: *mut FFIPerson, length: u32) -> bool {
+pub extern "C" fn context_set_people(ctx_ptr: *mut Context, buffer: *const FFIPerson, length: u32) -> bool {
     let ctx = Context::from_ptr(ctx_ptr);
-    let ref_data = unsafe { std::slice::from_raw_parts(buffer, length as usize) };
+    let ref_data = to_slice(buffer, length);
     debug!("context_set_persons {:?}: {:?}", ctx.get_control_value(), ref_data);
 
     let people = ref_data.iter().map(|ffi_person| {
-        let c_str = unsafe {
-            assert!(!ffi_person.name.is_null());
-            CStr::from_ptr(ffi_person.name)
-        };
-
-        let string = c_str.to_str().unwrap().to_string();
-
         Person {
             id: ffi_person.id,
-            name: string
+            name: from_cstr(ffi_person.name),
+            addresses: to_slice(ffi_person.addresses, ffi_person.addresses_length).iter().map(|ffi_address| {
+                Address {
+                    address: from_cstr(ffi_address.address)
+                }
+            }).collect()
         }
     }).collect();
 
@@ -315,21 +179,45 @@ pub extern "C" fn context_set_people(ctx_ptr: *mut Context, buffer: *mut FFIPers
 
 #[no_mangle]
 pub extern "C" fn context_get_people(ctx_ptr: *mut Context, callback: extern "stdcall" fn (*mut FFIPerson, u32)) -> bool {
-    let mut ctx = Context::from_ptr(ctx_ptr);
+    let ctx = Context::from_ptr(ctx_ptr);
 
-    let people = mem::replace(&mut ctx.people, vec![]);
+    let people = &ctx.people;
     let len= people.len() as u32;
 
     let mut people_ffi = people.into_iter().map(|person|{
         FFIPerson {
             id: person.id,
-            name: CString::new(person.name).unwrap().into_raw()
+            name: to_cstr(person.name.as_str()),
+            addresses: person.addresses.iter().map(|address| {
+                FFIAddress {
+                    address: to_cstr(address.address.as_str())
+                }
+            }).collect::<Vec<_>>().as_mut_ptr(),
+            addresses_length: person.addresses.len() as u32
         }
     }).collect::<Vec<_>>();
 
     callback(people_ffi.as_mut_ptr(), len);
 
     true
+}
+
+fn to_cstr(value: &str) -> *mut c_char{
+    CString::new(value).unwrap().into_raw()
+}
+
+fn from_cstr(ptr: *const c_char) -> String {
+    let c_str = unsafe {
+        assert!(!ptr.is_null());
+        CStr::from_ptr(ptr)
+    };
+
+    c_str.to_str().unwrap().to_string()
+}
+
+
+fn to_slice<'a, T>(buffer: *const T, length: u32) -> &'a [T] {
+    unsafe { std::slice::from_raw_parts(buffer, length as usize) }
 }
 
 #[no_mangle]
@@ -341,39 +229,6 @@ pub extern "C" fn free_string(ptr: *mut c_char) -> bool {
     true
 }
 
-#[no_mangle]
-pub extern "C" fn context_add_byte_request(ctx_ptr: *mut Context, buffer: *mut u8, length: i32) -> bool {
-    debug!("context_add_byte_request - receiving bytes of {:?}", length);
-
-    assert!(!buffer.is_null(), "buffer pointer could not be null");
-
-    let ref_data = unsafe { std::slice::from_raw_parts(buffer, length as usize) };
-    let own_data = ref_data.to_vec();
-
-    let ctx = Context::from_ptr(ctx_ptr);
-    ctx.append_byte_request(own_data);
-
-    true
-}
-
-#[no_mangle]
-pub extern "C" fn context_get_byte_responses(ctx_ptr: *mut Context, callback: extern "stdcall" fn (*mut u8, i32)) -> bool {
-    let ctx = Context::from_ptr(ctx_ptr);
-    match ctx.get_byte_responses() {
-        Some(mut bytes) => {
-            callback(bytes.as_mut_ptr(), bytes.len() as i32);
-            true
-        },
-        None => false,
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn context_get_input(ptr: *mut Context) -> i32 {
-    let ctx = Context::from_ptr(ptr);
-    debug!("getting input as {:?}", ctx);
-    ctx.get_input()
-}
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -385,7 +240,13 @@ pub struct V2 {
 #[derive(Debug)]
 pub struct Person {
     pub id: u32,
-    pub name: String
+    pub name: String,
+    pub addresses: Vec<Address>
+}
+
+#[derive(Debug)]
+pub struct Address {
+    pub address: String,
 }
 
 #[repr(C)]
@@ -393,28 +254,14 @@ pub struct Person {
 pub struct FFIPerson {
     pub id: u32,
     pub name: *mut c_char,
+    pub addresses: *mut FFIAddress,
+    pub addresses_length: u32,
 }
 
 #[repr(C)]
-pub struct Component {
-    label: *mut c_char
-}
-
-#[repr(C)]
-pub struct Entity {
-    id: u32,
-    pos: V2,
-    kind: u32,
-    components: *mut Component,
-    components_length: u32,
-}
-
-#[repr(C)]
-pub struct OutputMessages {
-    new_entities: *mut Entity,
-    new_entities_length: u32,
-    removed_entities: *mut u32,
-    removed_entities_length: u32,
+#[derive(Debug)]
+pub struct FFIAddress {
+    pub address: *mut c_char,
 }
 
 #[no_mangle]
