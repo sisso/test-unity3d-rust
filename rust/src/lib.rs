@@ -35,6 +35,8 @@ pub struct Context {
     responses: Option<Vec<String>>,
     byte_requests: Option<Vec<u8>>,
     byte_responses: Option<Vec<u8>>,
+    string: Option<String>,
+    v2: Option<V2>,
 }
 
 impl<'a> Context {
@@ -45,7 +47,9 @@ impl<'a> Context {
             requests: None,
             responses: None,
             byte_requests: None,
-            byte_responses: None
+            byte_responses: None,
+            string: None,
+            v2: None
         }
     }
 
@@ -179,6 +183,58 @@ pub extern "C" fn context_get_responses(ctx_ptr: *mut Context) -> *mut c_char {
     }
 }
 
+
+#[no_mangle]
+pub extern "C" fn context_set_string(ctx_ptr: *mut Context, value: *const c_char) -> bool {
+    let c_str = unsafe {
+        assert!(!value.is_null());
+        CStr::from_ptr(value)
+    };
+
+    let value = c_str.to_str().unwrap();
+    let ctx = Context::from_ptr(ctx_ptr);
+    debug!("context_set_string {:?}: {}", ctx.get_control_value(), value);
+    ctx.string = Some(value.to_string());
+    true
+}
+
+
+#[no_mangle]
+pub extern "C" fn context_get_string(ctx_ptr: *mut Context) -> *mut c_char {
+    let ctx = Context::from_ptr(ctx_ptr);
+
+    let value = ctx.string.take();
+
+    debug!("context_get_string {:?}: {:?}", ctx.get_control_value(), value);
+
+    match value {
+        Some(string) => {
+            let c_str_song = CString::new(string).unwrap();
+            c_str_song.into_raw()
+        },
+        _ => {
+            let c_str_song = CString::new("").unwrap();
+            c_str_song.into_raw()
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn context_set_struct(ctx_ptr: *mut Context, value: V2) -> bool {
+    let ctx = Context::from_ptr(ctx_ptr);
+    debug!("context_set_struct {:?}: {:?}", ctx.get_control_value(), value);
+    ctx.v2 = Some(value);
+    true
+}
+
+#[no_mangle]
+pub extern "C" fn context_get_struct(ctx_ptr: *mut Context) -> V2 {
+    let ctx = Context::from_ptr(ctx_ptr);
+    let value = ctx.v2.take().unwrap_or(V2 { x: 0, y: 0 });
+    debug!("context_get_struct {:?}: {:?}", ctx.get_control_value(), value);
+    value
+}
+
 #[no_mangle]
 pub extern "C" fn free_string(ptr: *mut c_char) -> bool {
     assert!(!ptr.is_null());
@@ -223,6 +279,7 @@ pub extern "C" fn context_get_input(ptr: *mut Context) -> i32 {
 }
 
 #[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct V2 {
     pub x: i32,
     pub y: i32,
@@ -264,7 +321,6 @@ pub struct FFIArray<T> {
 
 #[no_mangle]
 pub extern fn add_numbers(number1: i32, number2: i32) -> i32 {
-    println!("Hello from rust!");
     number1 + number2
 }
 
