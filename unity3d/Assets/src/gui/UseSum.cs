@@ -103,7 +103,7 @@ public class UseSum : MonoBehaviour
         }
         Debug.Log("list_deleted: " + buffer);
 
-        Debug.Log("Running GetNewEntities");
-        this.context.GetNewEntities();
+        //Debug.Log("Running GetNewEntities");
+        //this.context.GetNewEntities();
     }
 }
