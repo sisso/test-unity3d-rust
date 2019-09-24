@@ -38,6 +38,7 @@ pub struct Context {
     string: Option<String>,
     v2: Option<V2>,
     array: Option<Vec<u8>>,
+    v2_array: Option<Vec<V2>>,
 }
 
 impl<'a> Context {
@@ -51,7 +52,8 @@ impl<'a> Context {
             byte_responses: None,
             string: None,
             v2: None,
-            array: None
+            array: None,
+            v2_array: None
         }
     }
 
@@ -254,6 +256,30 @@ pub extern "C" fn context_get_array(ctx_ptr: *mut Context, callback: extern "std
     match ctx.array.take() {
         Some(mut value) => {
             debug!("context_get_array {:?}: {:?}", ctx.get_control_value(), value);
+            callback(value.as_mut_ptr(), value.len() as u32);
+            true
+        },
+        None => false,
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn context_set_struct_array(ctx_ptr: *mut Context, buffer: *mut V2, length: u32) -> bool {
+    let ctx = Context::from_ptr(ctx_ptr);
+    let ref_data = unsafe { std::slice::from_raw_parts(buffer, length as usize) };
+    let value = ref_data.to_vec();
+    debug!("context_set_struct_array {:?}: {:?}", ctx.get_control_value(), value);
+    ctx.v2_array = Some(value);
+    true
+}
+
+#[no_mangle]
+pub extern "C" fn context_get_struct_array(ctx_ptr: *mut Context, callback: extern "stdcall" fn (*mut V2, u32)) -> bool {
+    let ctx = Context::from_ptr(ctx_ptr);
+
+    match ctx.v2_array.take() {
+        Some(mut value) => {
+            debug!("context_get_struct_array {:?}: {:?}", ctx.get_control_value(), value);
             callback(value.as_mut_ptr(), value.len() as u32);
             true
         },

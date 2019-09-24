@@ -1,5 +1,8 @@
-﻿using System;
+﻿using System.Collections;
+using System.Collections.Generic;
+
 using System.Runtime.InteropServices;
+using System;
 
 namespace testcsharprust
 {
@@ -30,6 +33,11 @@ namespace testcsharprust
         internal static extern bool context_set_array(ContextHandler ptr, byte[] buffer, UInt32 len);
         [DllImport("/home/sisso/workspace/test-unity3d-rust/rust/target/debug/librustlib.so", CharSet = CharSet.Unicode)]
         internal static extern bool context_get_array(ContextHandler ptr, Action<IntPtr, UInt32> callback);
+
+        [DllImport("/home/sisso/workspace/test-unity3d-rust/rust/target/debug/librustlib.so")]
+        internal static extern bool context_set_struct_array(ContextHandler ptr, V2[] buffer, UInt32 len);
+        [DllImport("/home/sisso/workspace/test-unity3d-rust/rust/target/debug/librustlib.so", CharSet = CharSet.Unicode)]
+        internal static extern bool context_get_struct_array(ContextHandler ptr, Action<IntPtr, UInt32> callback);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -137,7 +145,7 @@ namespace testcsharprust
 
         public byte[] GetArray()
         {
-            byte[] bytes = new byte[0] {};
+            byte[] bytes = new byte[0] { };
 
             FFI.context_get_array(this.handler, (ptr, length) =>
             {
@@ -153,10 +161,35 @@ namespace testcsharprust
 
             return bytes;
         }
+
+        public void SetStructArray(V2[] array)
+        {
+            FFI.context_set_struct_array(this.handler, array, Convert.ToUInt32(array.Length));
+        }
+
+        public V2[] GetStructArray()
+        {
+            V2[] array = new V2[0] { };
+
+            FFI.context_get_struct_array(this.handler, (ptr, length) =>
+            {
+                var size = Marshal.SizeOf<V2>();
+                array = new V2[length];
+
+                for (int i = 0; i < length; i++)
+                {
+                    V2 value = Marshal.PtrToStructure<V2>(ptr);
+                    array[i] = value;
+                    ptr += size;
+                }
+            });
+
+            return array;
+        }
     }
 
     class MainClass
-	{
+    {
         static void Assert(bool condition)
         {
             if (!condition)
@@ -173,23 +206,20 @@ namespace testcsharprust
 
         static void SendAndReceiveStringTest(Context context)
         {
-            Console.WriteLine("SendAndReceiveStringTest set");
             context.SetString("schönes");
-
-            Console.WriteLine("SendAndReceiveStringTest get");
             var str = context.GetString();
-            Console.WriteLine("SendAndReceiveStringTest receive "+str);
+
+            Console.WriteLine("SendAndReceiveStringTest receive " + str);
             Assert(str == "schönes");
         }
 
         static void SendAndReceiveStructTest(Context context)
         {
-            Console.WriteLine("SendAndReceiveStructTest set");
             V2 v2 = new V2 { x = 9, y = 8 };
             context.SetV2(v2);
 
-            Console.WriteLine("SendAndReceiveStructTest get");
             var value = context.GetV2();
+
             Console.WriteLine("SendAndReceiveStructTest receive " + value);
             Assert(value.x == 9);
             Assert(value.y == 8);
@@ -197,20 +227,41 @@ namespace testcsharprust
 
         static void SendAndReceiveArrayTest(Context context)
         {
-            Console.WriteLine("SendAndReceiveArrayTest set");
             byte[] bytes = new byte[] { 3, 4, 5, 6, 7 };
             context.SetArray(bytes);
 
-            Console.WriteLine("SendAndReceiveArrayTest get");
             var value = context.GetArray();
             var str = "[";
-            for (int i = 0; i < value.Length ; i++)
+            for (int i = 0; i < value.Length; i++)
             {
                 str += value[i] + (i == value.Length - 1 ? "" : ",");
             }
             str += "]";
-        
+
             Console.WriteLine("SendAndReceiveArrayTest receive " + str);
+            Assert(value.Length == 5);
+            Assert(value[0] == 3);
+            Assert(value[4] == 7);
+        }
+
+
+        static void SendAndReceiveStructArrayTest(Context context)
+        {
+            V2[] array = new V2[] { new V2 { x = 1, y = 2 }, new V2 { x = 3, y = 4 } };
+            context.SetStructArray(array);
+
+            var value = context.GetStructArray();
+            var str = "[";
+            for (int i = 0; i < value.Length; i++)
+            {
+                str += value[i] + (i == value.Length - 1 ? "" : ",");
+            }
+            str += "]";
+
+            Console.WriteLine("SendAndReceiveArrayTest receive " + str);
+            Assert(value.Length == 2);
+            Assert(value[0].x == 1);
+            Assert(value[1].y == 4);
         }
 
         public static void Main (string[] args)
@@ -221,6 +272,7 @@ namespace testcsharprust
             SendAndReceiveStringTest(context);
             SendAndReceiveStructTest(context);
             SendAndReceiveArrayTest(context);
+            SendAndReceiveStructArrayTest(context);
 
             Console.WriteLine("Done");
         }
