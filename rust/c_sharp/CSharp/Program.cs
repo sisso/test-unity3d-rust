@@ -8,14 +8,9 @@ namespace CSharp
     {
         public static void Main(string[] args)
         {
-            var ctx = new Context();
-            var bytes = ctx.GetByteRequest();
-            Console.WriteLine("Receive bytes: " + bytes.Length);
-            for (int i = 0; i < bytes.Length ; i++)
-            {
-                Console.WriteLine(" "+bytes[i]);
-            }
-
+            //Console.WriteLine("Receive: " + Rust.FFI.add_numbers(1, 2));
+            Console.WriteLine("Press a key to continue.");
+            Console.ReadLine();
             Console.WriteLine("Done");
         }
     }
