@@ -165,11 +165,7 @@ pub extern "C" fn context_set_people(ctx_ptr: *mut Context, buffer: *const FFIPe
         Person {
             id: ffi_person.id,
             name: from_cstr(ffi_person.name),
-            addresses: to_slice(ffi_person.addresses, ffi_person.addresses_length).iter().map(|ffi_address| {
-                Address {
-                    address: from_cstr(ffi_address.address)
-                }
-            }).collect()
+            number: ffi_person.number,
         }
     }).collect();
 
@@ -188,12 +184,7 @@ pub extern "C" fn context_get_people(ctx_ptr: *mut Context, callback: extern "st
         FFIPerson {
             id: person.id,
             name: to_cstr(person.name.as_str()),
-            addresses: person.addresses.iter().map(|address| {
-                FFIAddress {
-                    address: to_cstr(address.address.as_str())
-                }
-            }).collect::<Vec<_>>().as_mut_ptr(),
-            addresses_length: person.addresses.len() as u32
+            number: person.number,
         }
     }).collect::<Vec<_>>();
 
@@ -241,27 +232,16 @@ pub struct V2 {
 pub struct Person {
     pub id: u32,
     pub name: String,
-    pub addresses: Vec<Address>
+    pub number: u32,
 }
 
-#[derive(Debug)]
-pub struct Address {
-    pub address: String,
-}
 
 #[repr(C)]
 #[derive(Debug)]
 pub struct FFIPerson {
     pub id: u32,
     pub name: *mut c_char,
-    pub addresses: *mut FFIAddress,
-    pub addresses_length: u32,
-}
-
-#[repr(C)]
-#[derive(Debug)]
-pub struct FFIAddress {
-    pub address: *mut c_char,
+    pub number: u32,
 }
 
 #[no_mangle]

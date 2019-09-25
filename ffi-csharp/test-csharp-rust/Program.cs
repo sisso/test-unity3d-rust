@@ -49,25 +49,12 @@ namespace testcsharprust
     public struct FFIPerson
     {
         public UInt32 id;
-        [MarshalAs(UnmanagedType.LPWStr)]
         public string name;
-        public FFIAddress[] addresses;
+        public Int32 number;
 
         public override string ToString()
         {
-            return string.Format("[FFIPerson: id={0}, name={1}, addresses={2}]", id, name, addresses);
-        }
-    }
-
-    [StructLayout(LayoutKind.Sequential)]
-    public struct FFIAddress
-    {
-        [MarshalAs(UnmanagedType.LPWStr)]
-        public string name;
-
-        public override string ToString()
-        {
-            return string.Format("[FFIAddress: name={0}]", name);
+            return string.Format("[FFIPerson: id={0}, name={1}, number={2}]", id, name, number);
         }
     }
 
@@ -232,7 +219,7 @@ namespace testcsharprust
 
         public FFIPerson[] GetPeople()
         {
-            FFIPerson[] array = new FFIPerson[0] { };
+            FFIPerson[] array = null;
 
             FFI.context_get_people(this.handler, (ptr, length) =>
             {
@@ -246,6 +233,9 @@ namespace testcsharprust
                     ptr += size;
                 }
             });
+
+            if (array == null)
+                throw new Exception();
 
             return array;
         }
@@ -329,14 +319,10 @@ namespace testcsharprust
         static void SendAndReceivePeopleTest(Context context)
         {
             FFIPerson[] array = new FFIPerson[] {
-                new FFIPerson { id = 0, name = "Roger", addresses = new FFIAddress[] {
-                    new FFIAddress { name = "Street one" },
-                }}
-                //,
-                //new FFIPerson { id = 1, name = "John", addresses = new FFIAddress[] {
-                //    new FFIAddress { name = "Strasse" },
-                //    new FFIAddress { name = "Street two" },
-                //}},
+                new FFIPerson { id = 0, name = "Roger", number = 5 },
+                new FFIPerson { id = 1, name = "Borge", number = 6 },
+                new FFIPerson { id = 2, name = "Loger", number = 7 },
+                new FFIPerson { id = 3, name = "Noger", number = 8 }
             };
             context.SetPeople(array);
 
@@ -349,9 +335,10 @@ namespace testcsharprust
             str += "]";
 
             Console.WriteLine("SendAndReceivePeopleTest receive " + str);
-            Assert(value.Length == 2);
+            Assert(value.Length == 4);
             Assert(value[0].id == 0);
-            Assert(value[1].name == "John");
+            Assert(value[2].number == 7);
+            Assert(value[3].name == "Noger");
         }
 
         public static void Main (string[] args)
