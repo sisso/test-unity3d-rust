@@ -1,0 +1,5 @@
+use rustlib;
+
+fn main() {
+
+}

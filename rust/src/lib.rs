@@ -4,6 +4,8 @@ use std::os::raw::c_char;
 #[macro_use]
 mod debug;
 
+pub mod schema_generated;
+
 #[derive(Debug)]
 pub struct Context {
     control: i32,
