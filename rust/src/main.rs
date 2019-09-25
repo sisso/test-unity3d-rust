@@ -1,8 +1,11 @@
 extern crate flatbuffers;
 
 pub mod schema_generated;
+pub mod schema_2_generated;
+pub mod monster_schema_generated;
 
-use flatbuffers::FlatBufferBuilder;
+use schema_2_generated as bench_fbs;
+use flatbuffers::{FlatBufferBuilder, WIPOffset};
 use schema_generated::users::{User, UserArgs, finish_user_buffer, get_root_as_user};
 
 pub fn make_user(bldr: &mut FlatBufferBuilder, dest: &mut Vec<u8>, name: &str, id: u64) {
@@ -61,3 +64,46 @@ pub fn main() {
     println!("{} has id {}. The encoded data is {} bytes long.", name, id, bytes.len());
 }
 
+#[test]
+fn it_deserializes() {
+    const ID: u64 = 12;
+    let mut builder = FlatBufferBuilder::new();
+    // bench::Basic values that will be serialized
+    let basic_args = bench_fbs::bench::BasicArgs { id: ID, .. Default::default() };
+    // Serialize bench::Basic struct
+    let basic: WIPOffset<_> = bench_fbs::bench::Basic::create(&mut builder, &basic_args);
+    // Must "finish" the builder before calling `finished_data()`
+    builder.finish_minimal(basic);
+    // Deserialize the bench::Basic
+    let parsed = flatbuffers::get_root::<bench_fbs::bench::Basic>(builder.finished_data());
+
+    println!("receive {:?}", parsed);
+
+    assert_eq!(parsed.id(), ID);
+    assert!(false)
+}
+
+#[test]
+fn it_deserializes_2() {
+    const ID: u64 = 12;
+    const NAME: &str = "name";
+    const REFERENCE: &str = "reference";
+    let mut builder = flatbuffers::FlatBufferBuilder::new();
+    {
+        let args = bench_fbs::bench::BasicArgs{id: ID};
+        let basic = Some(bench_fbs::bench::Basic::create(&mut builder, &args));
+        let name = Some(builder.create_string(NAME));
+        let reference = Some(builder.create_string(REFERENCE));
+        let args = bench_fbs::bench::ComplexArgs{ basic, name, reference };
+        let complex = bench_fbs::bench::Complex::create(&mut builder, &args);
+        builder.finish_minimal(complex);
+    }
+    let parsed = flatbuffers::get_root::<bench_fbs::bench::Complex>(builder.finished_data());
+
+    println!("receive {:?}", parsed);
+
+    assert_eq!(parsed.basic().id(), ID);
+    assert_eq!(parsed.name(), NAME);
+    assert_eq!(parsed.reference(), REFERENCE);
+    assert!(false)
+}

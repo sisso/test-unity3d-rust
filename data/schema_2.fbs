@@ -1,0 +1,11 @@
+namespace bench;
+
+table Basic {
+  id:ulong;
+}
+
+table Complex {
+  name:string (required);
+  basic:bench.Basic (required);
+  reference:string (required);
+}
