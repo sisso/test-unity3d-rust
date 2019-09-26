@@ -35,24 +35,20 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="messages\OutputEmpty.cs" />
-    <Compile Include="messages\InputEmpty.cs" />
-    <Compile Include="messages\InputKind.cs" />
-    <Compile Include="messages\V3.cs" />
-    <Compile Include="messages\OutputId.cs" />
-    <Compile Include="messages\Outputs.cs" />
-    <Compile Include="messages\OutputKind.cs" />
-    <Compile Include="messages\Inputs.cs" />
-    <Compile Include="messages\OutputIdV3.cs" />
-    <Compile Include="messages\Message.cs" />
-    <Compile Include="net\FlatBuffers\IFlatbufferObject.cs" />
-    <Compile Include="net\FlatBuffers\ByteBufferUtil.cs" />
-    <Compile Include="net\FlatBuffers\FlatBufferBuilder.cs" />
-    <Compile Include="net\FlatBuffers\Offset.cs" />
-    <Compile Include="net\FlatBuffers\ByteBuffer.cs" />
-    <Compile Include="net\FlatBuffers\Table.cs" />
-    <Compile Include="net\FlatBuffers\FlatBufferConstants.cs" />
-    <Compile Include="net\FlatBuffers\Struct.cs" />
+    <Compile Include="FlatBuffers\ByteBuffer.cs" />
+    <Compile Include="FlatBuffers\ByteBufferUtil.cs" />
+    <Compile Include="FlatBuffers\FlatBufferBuilder.cs" />
+    <Compile Include="FlatBuffers\FlatBufferConstants.cs" />
+    <Compile Include="FlatBuffers\IFlatbufferObject.cs" />
+    <Compile Include="FlatBuffers\Offset.cs" />
+    <Compile Include="FlatBuffers\Struct.cs" />
+    <Compile Include="FlatBuffers\Table.cs" />
+    <Compile Include="messages\Messages.cs" />
+    <Compile Include="messages\V2.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="FlatBuffers\" />
+    <Folder Include="messages\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -1,10 +1,12 @@
+#[macro_use]
+pub mod debug;
+pub mod schema_generated;
+
 use std::ffi::{CString, CStr};
 use std::os::raw::c_char;
 
-#[macro_use]
-mod debug;
-
-pub mod schema_generated;
+use schema_generated::messages;
+use flatbuffers::FlatBufferBuilder;
 
 #[derive(Debug)]
 pub struct Context {
@@ -13,7 +15,8 @@ pub struct Context {
     v2: Option<V2>,
     array: Option<Vec<u8>>,
     v2_array: Option<Vec<V2>>,
-    people: Vec<Person>
+    people: Vec<Person>,
+    vectors: Vec<(i32, i32)>,
 }
 
 impl<'a> Context {
@@ -24,7 +27,8 @@ impl<'a> Context {
             v2: None,
             array: None,
             v2_array: None,
-            people: vec![]
+            people: vec![],
+            vectors: vec![]
         }
     }
 
@@ -191,6 +195,52 @@ pub extern "C" fn context_get_people(ctx_ptr: *mut Context, callback: extern "st
     }).collect::<Vec<_>>();
 
     callback(people_ffi.as_mut_ptr(), len);
+
+    true
+}
+
+
+#[no_mangle]
+pub extern "C" fn context_set_flatbuffer(ctx_ptr: *mut Context, buffer: *const u8, length: u32) -> bool {
+    let ctx = Context::from_ptr(ctx_ptr);
+    let ref_data = unsafe { std::slice::from_raw_parts(buffer, length as usize) };
+
+    let root  = messages::get_root_as_messages(ref_data);
+    debug!("context_set_array {:?}: {:?}", ctx.get_control_value(), ref_data);
+
+    if let Some(input) = root.input() {
+        ctx.vectors.clear();
+        for v in input {
+            ctx.vectors.push((v.x(), v.y()));
+        }
+    }
+
+    true
+}
+
+#[no_mangle]
+pub extern "C" fn context_get_flatbuffer(ctx_ptr: *mut Context, callback: extern "stdcall" fn (*const u8, u32)) -> bool {
+    let ctx = Context::from_ptr(ctx_ptr);
+
+    let mut b = FlatBufferBuilder::new();
+
+    let vecs: Vec<messages::V2> = ctx.vectors.iter().map(|(x, y)| {
+        messages::V2::new(*x,*y)
+    }).collect();
+    let vectors= b.create_vector(vecs.as_ref());
+
+    let args = messages::MessagesArgs {
+        input: None,
+        output: Some(vectors)
+    };
+
+    let root = messages::Messages::create(&mut b, &args);
+    b.finish_minimal(root);
+
+    let raw_data = b.finished_data();
+    debug!("context_get_flatbuffer {:?}: {:?}", ctx.get_control_value(), raw_data);
+
+    callback(raw_data.as_ptr(), raw_data.len() as u32);
 
     true
 }

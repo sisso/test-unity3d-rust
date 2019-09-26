@@ -1,8 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using System;
+
+using FlatBuffers;
 
 namespace testcsharprust
 {
@@ -43,6 +42,11 @@ namespace testcsharprust
         internal static extern bool context_set_people(ContextHandler ptr, [In] FFIPerson[] buffer, UInt32 len);
         [DllImport("/home/sisso/workspace/test-unity3d-rust/rust/target/debug/librustlib.so", CharSet = CharSet.Unicode)]
         internal static extern bool context_get_people(ContextHandler ptr, Action<IntPtr, UInt32> callback);
+
+        [DllImport("/home/sisso/workspace/test-unity3d-rust/rust/target/debug/librustlib.so")]
+        internal static extern bool context_set_flatbuffer(ContextHandler ptr, byte[] buffer, UInt32 len);
+        [DllImport("/home/sisso/workspace/test-unity3d-rust/rust/target/debug/librustlib.so", CharSet = CharSet.Unicode)]
+        internal static extern bool context_get_flatbuffer(ContextHandler ptr, Action<IntPtr, UInt32> callback);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -239,6 +243,59 @@ namespace testcsharprust
 
             return array;
         }
+
+        public void SetFlatBuffers(int[][] vectors)
+        {
+
+            var builder = new FlatBufferBuilder(1024);
+            messages.Messages.StartInputVector(builder, vectors.Length);
+            for (int i = 0; i < vectors.Length; i++)
+            {
+                messages.V2.CreateV2(builder, vectors[i][0], vectors[i][1]);
+            }
+            var vecs = builder.EndVector();
+
+            messages.Messages.StartMessages(builder);
+            messages.Messages.AddInput(builder, vecs);
+            var msg = messages.Messages.EndMessages(builder);
+            builder.Finish(msg.Value);
+
+            // TODO: remove copy
+            var bytes = builder.SizedByteArray();
+            FFI.context_set_flatbuffer(this.handler, bytes, Convert.ToUInt32(bytes.Length));
+        }
+
+        public int[][] GetFlatBuffers()
+        {
+            int[][] result = null;
+
+            FFI.context_get_flatbuffer(this.handler, (ptr, length) =>
+            {
+                // copy bytes
+                var bytes = new byte[length];
+                for (int i = 0; i < length; i++)
+                {
+                    byte b = Marshal.ReadByte(ptr);
+                    bytes[i] = b;
+                    ptr += 1;
+                }
+
+                // unmarshlar
+                var buffer = new ByteBuffer(bytes);
+                var msg = messages.Messages.GetRootAsMessages(buffer);
+
+                result = new int[msg.OutputLength][];
+                for (int i = 0; i < msg.OutputLength; i++)
+                {
+                    var v = msg.Output(i);
+                    result[i] = new int[] {
+                        v.Value.X, v.Value.Y
+                    };
+                }
+            });
+
+            return result;
+        }
     }
 
     class MainClass
@@ -341,6 +398,24 @@ namespace testcsharprust
             Assert(value[3].name == "Noger");
         }
 
+        static void SendAndReceiveFlatBuffersTest(Context context)
+        {
+            var vectors = new int[][] {
+                new int[] {32, 33},
+                new int[] {34, 22},
+            };
+
+            context.SetFlatBuffers(vectors);
+            var value = context.GetFlatBuffers();
+            var str = "[";
+            for (int i = 0; i < value.Length; i++)
+            {
+                str += "(" + value[i][0] + "," + value[i][1] + ")" + (i == value.Length - 1 ? "" : ",");
+            }
+            str += "]";
+            Console.WriteLine("SendAndReceiveFlatBuffersTest receive " + str);
+        }
+
         public static void Main (string[] args)
 		{
             AddNumberTest();
@@ -351,6 +426,7 @@ namespace testcsharprust
             SendAndReceiveArrayTest(context);
             SendAndReceiveStructArrayTest(context);
             SendAndReceivePeopleTest(context);
+            SendAndReceiveFlatBuffersTest(context);
 
             Console.WriteLine("Done");
         }
