@@ -17,210 +17,76 @@ pub mod messages {
   extern crate flatbuffers;
   use self::flatbuffers::EndianScalar;
 
-#[allow(non_camel_case_types)]
-#[repr(i16)]
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub enum InputKind {
-  Start = 0,
-  Reset = 1,
-
-}
-
-const ENUM_MIN_INPUT_KIND: i16 = 0;
-const ENUM_MAX_INPUT_KIND: i16 = 1;
-
-impl<'a> flatbuffers::Follow<'a> for InputKind {
-  type Inner = Self;
-  #[inline]
-  fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    flatbuffers::read_scalar_at::<Self>(buf, loc)
-  }
-}
-
-impl flatbuffers::EndianScalar for InputKind {
-  #[inline]
-  fn to_little_endian(self) -> Self {
-    let n = i16::to_le(self as i16);
-    let p = &n as *const i16 as *const InputKind;
-    unsafe { *p }
-  }
-  #[inline]
-  fn from_little_endian(self) -> Self {
-    let n = i16::from_le(self as i16);
-    let p = &n as *const i16 as *const InputKind;
-    unsafe { *p }
-  }
-}
-
-impl flatbuffers::Push for InputKind {
-    type Output = InputKind;
-    #[inline]
-    fn push(&self, dst: &mut [u8], _rest: &[u8]) {
-        flatbuffers::emplace_scalar::<InputKind>(dst, *self);
-    }
-}
-
-#[allow(non_camel_case_types)]
-const ENUM_VALUES_INPUT_KIND:[InputKind; 2] = [
-  InputKind::Start,
-  InputKind::Reset
-];
-
-#[allow(non_camel_case_types)]
-const ENUM_NAMES_INPUT_KIND:[&'static str; 2] = [
-    "Start",
-    "Reset"
-];
-
-pub fn enum_name_input_kind(e: InputKind) -> &'static str {
-  let index = e as i16;
-  ENUM_NAMES_INPUT_KIND[index as usize]
-}
-
-#[allow(non_camel_case_types)]
-#[repr(i16)]
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub enum OutputKind {
-  Started = 0,
-  Reseted = 1,
-  Created = 2,
-  Updated = 3,
-  Removed = 4,
-
-}
-
-const ENUM_MIN_OUTPUT_KIND: i16 = 0;
-const ENUM_MAX_OUTPUT_KIND: i16 = 4;
-
-impl<'a> flatbuffers::Follow<'a> for OutputKind {
-  type Inner = Self;
-  #[inline]
-  fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    flatbuffers::read_scalar_at::<Self>(buf, loc)
-  }
-}
-
-impl flatbuffers::EndianScalar for OutputKind {
-  #[inline]
-  fn to_little_endian(self) -> Self {
-    let n = i16::to_le(self as i16);
-    let p = &n as *const i16 as *const OutputKind;
-    unsafe { *p }
-  }
-  #[inline]
-  fn from_little_endian(self) -> Self {
-    let n = i16::from_le(self as i16);
-    let p = &n as *const i16 as *const OutputKind;
-    unsafe { *p }
-  }
-}
-
-impl flatbuffers::Push for OutputKind {
-    type Output = OutputKind;
-    #[inline]
-    fn push(&self, dst: &mut [u8], _rest: &[u8]) {
-        flatbuffers::emplace_scalar::<OutputKind>(dst, *self);
-    }
-}
-
-#[allow(non_camel_case_types)]
-const ENUM_VALUES_OUTPUT_KIND:[OutputKind; 5] = [
-  OutputKind::Started,
-  OutputKind::Reseted,
-  OutputKind::Created,
-  OutputKind::Updated,
-  OutputKind::Removed
-];
-
-#[allow(non_camel_case_types)]
-const ENUM_NAMES_OUTPUT_KIND:[&'static str; 5] = [
-    "Started",
-    "Reseted",
-    "Created",
-    "Updated",
-    "Removed"
-];
-
-pub fn enum_name_output_kind(e: OutputKind) -> &'static str {
-  let index = e as i16;
-  ENUM_NAMES_OUTPUT_KIND[index as usize]
-}
-
-// struct V3, aligned to 4
+// struct V2, aligned to 4
 #[repr(C, align(4))]
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct V3 {
-  x_: f32,
-  y_: f32,
-  z_: f32,
-} // pub struct V3
-impl flatbuffers::SafeSliceAccess for V3 {}
-impl<'a> flatbuffers::Follow<'a> for V3 {
-  type Inner = &'a V3;
+pub struct V2 {
+  x_: i32,
+  y_: i32,
+} // pub struct V2
+impl flatbuffers::SafeSliceAccess for V2 {}
+impl<'a> flatbuffers::Follow<'a> for V2 {
+  type Inner = &'a V2;
   #[inline]
   fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    <&'a V3>::follow(buf, loc)
+    <&'a V2>::follow(buf, loc)
   }
 }
-impl<'a> flatbuffers::Follow<'a> for &'a V3 {
-  type Inner = &'a V3;
+impl<'a> flatbuffers::Follow<'a> for &'a V2 {
+  type Inner = &'a V2;
   #[inline]
   fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    flatbuffers::follow_cast_ref::<V3>(buf, loc)
+    flatbuffers::follow_cast_ref::<V2>(buf, loc)
   }
 }
-impl<'b> flatbuffers::Push for V3 {
-    type Output = V3;
+impl<'b> flatbuffers::Push for V2 {
+    type Output = V2;
     #[inline]
     fn push(&self, dst: &mut [u8], _rest: &[u8]) {
         let src = unsafe {
-            ::std::slice::from_raw_parts(self as *const V3 as *const u8, Self::size())
+            ::std::slice::from_raw_parts(self as *const V2 as *const u8, Self::size())
         };
         dst.copy_from_slice(src);
     }
 }
-impl<'b> flatbuffers::Push for &'b V3 {
-    type Output = V3;
+impl<'b> flatbuffers::Push for &'b V2 {
+    type Output = V2;
 
     #[inline]
     fn push(&self, dst: &mut [u8], _rest: &[u8]) {
         let src = unsafe {
-            ::std::slice::from_raw_parts(*self as *const V3 as *const u8, Self::size())
+            ::std::slice::from_raw_parts(*self as *const V2 as *const u8, Self::size())
         };
         dst.copy_from_slice(src);
     }
 }
 
 
-impl V3 {
-  pub fn new<'a>(_x: f32, _y: f32, _z: f32) -> Self {
-    V3 {
+impl V2 {
+  pub fn new<'a>(_x: i32, _y: i32) -> Self {
+    V2 {
       x_: _x.to_little_endian(),
       y_: _y.to_little_endian(),
-      z_: _z.to_little_endian(),
 
     }
   }
-  pub fn x<'a>(&'a self) -> f32 {
+  pub fn x<'a>(&'a self) -> i32 {
     self.x_.from_little_endian()
   }
-  pub fn y<'a>(&'a self) -> f32 {
+  pub fn y<'a>(&'a self) -> i32 {
     self.y_.from_little_endian()
   }
-  pub fn z<'a>(&'a self) -> f32 {
-    self.z_.from_little_endian()
-  }
 }
 
-pub enum InputEmptyOffset {}
+pub enum MessagesOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
-pub struct InputEmpty<'a> {
+pub struct Messages<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for InputEmpty<'a> {
-    type Inner = InputEmpty<'a>;
+impl<'a> flatbuffers::Follow<'a> for Messages<'a> {
+    type Inner = Messages<'a>;
     #[inline]
     fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -229,534 +95,18 @@ impl<'a> flatbuffers::Follow<'a> for InputEmpty<'a> {
     }
 }
 
-impl<'a> InputEmpty<'a> {
+impl<'a> Messages<'a> {
     #[inline]
     pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        InputEmpty {
+        Messages {
             _tab: table,
         }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args InputEmptyArgs) -> flatbuffers::WIPOffset<InputEmpty<'bldr>> {
-      let mut builder = InputEmptyBuilder::new(_fbb);
-      builder.add_kind(args.kind);
-      builder.finish()
-    }
-
-    pub const VT_KIND: flatbuffers::VOffsetT = 4;
-
-  #[inline]
-  pub fn kind(&self) -> InputKind {
-    self._tab.get::<InputKind>(InputEmpty::VT_KIND, Some(InputKind::Start)).unwrap()
-  }
-}
-
-pub struct InputEmptyArgs {
-    pub kind: InputKind,
-}
-impl<'a> Default for InputEmptyArgs {
-    #[inline]
-    fn default() -> Self {
-        InputEmptyArgs {
-            kind: InputKind::Start,
-        }
-    }
-}
-pub struct InputEmptyBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> InputEmptyBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_kind(&mut self, kind: InputKind) {
-    self.fbb_.push_slot::<InputKind>(InputEmpty::VT_KIND, kind, InputKind::Start);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> InputEmptyBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    InputEmptyBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<InputEmpty<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-pub enum InputsOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct Inputs<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for Inputs<'a> {
-    type Inner = Inputs<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> Inputs<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        Inputs {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args InputsArgs<'args>) -> flatbuffers::WIPOffset<Inputs<'bldr>> {
-      let mut builder = InputsBuilder::new(_fbb);
-      if let Some(x) = args.inputs { builder.add_inputs(x); }
-      builder.finish()
-    }
-
-    pub const VT_INPUTS: flatbuffers::VOffsetT = 4;
-
-  #[inline]
-  pub fn inputs(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<InputEmpty<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<InputEmpty<'a>>>>>(Inputs::VT_INPUTS, None)
-  }
-}
-
-pub struct InputsArgs<'a> {
-    pub inputs: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<InputEmpty<'a >>>>>,
-}
-impl<'a> Default for InputsArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        InputsArgs {
-            inputs: None,
-        }
-    }
-}
-pub struct InputsBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> InputsBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_inputs(&mut self, inputs: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<InputEmpty<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Inputs::VT_INPUTS, inputs);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> InputsBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    InputsBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<Inputs<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-pub enum OutputEmptyOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct OutputEmpty<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for OutputEmpty<'a> {
-    type Inner = OutputEmpty<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> OutputEmpty<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        OutputEmpty {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args OutputEmptyArgs) -> flatbuffers::WIPOffset<OutputEmpty<'bldr>> {
-      let mut builder = OutputEmptyBuilder::new(_fbb);
-      builder.add_kind(args.kind);
-      builder.finish()
-    }
-
-    pub const VT_KIND: flatbuffers::VOffsetT = 4;
-
-  #[inline]
-  pub fn kind(&self) -> OutputKind {
-    self._tab.get::<OutputKind>(OutputEmpty::VT_KIND, Some(OutputKind::Started)).unwrap()
-  }
-}
-
-pub struct OutputEmptyArgs {
-    pub kind: OutputKind,
-}
-impl<'a> Default for OutputEmptyArgs {
-    #[inline]
-    fn default() -> Self {
-        OutputEmptyArgs {
-            kind: OutputKind::Started,
-        }
-    }
-}
-pub struct OutputEmptyBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> OutputEmptyBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_kind(&mut self, kind: OutputKind) {
-    self.fbb_.push_slot::<OutputKind>(OutputEmpty::VT_KIND, kind, OutputKind::Started);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> OutputEmptyBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    OutputEmptyBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<OutputEmpty<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-pub enum OutputIdOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct OutputId<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for OutputId<'a> {
-    type Inner = OutputId<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> OutputId<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        OutputId {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args OutputIdArgs) -> flatbuffers::WIPOffset<OutputId<'bldr>> {
-      let mut builder = OutputIdBuilder::new(_fbb);
-      builder.add_id(args.id);
-      builder.add_kind(args.kind);
-      builder.finish()
-    }
-
-    pub const VT_KIND: flatbuffers::VOffsetT = 4;
-    pub const VT_ID: flatbuffers::VOffsetT = 6;
-
-  #[inline]
-  pub fn kind(&self) -> OutputKind {
-    self._tab.get::<OutputKind>(OutputId::VT_KIND, Some(OutputKind::Started)).unwrap()
-  }
-  #[inline]
-  pub fn id(&self) -> u32 {
-    self._tab.get::<u32>(OutputId::VT_ID, Some(0)).unwrap()
-  }
-}
-
-pub struct OutputIdArgs {
-    pub kind: OutputKind,
-    pub id: u32,
-}
-impl<'a> Default for OutputIdArgs {
-    #[inline]
-    fn default() -> Self {
-        OutputIdArgs {
-            kind: OutputKind::Started,
-            id: 0,
-        }
-    }
-}
-pub struct OutputIdBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> OutputIdBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_kind(&mut self, kind: OutputKind) {
-    self.fbb_.push_slot::<OutputKind>(OutputId::VT_KIND, kind, OutputKind::Started);
-  }
-  #[inline]
-  pub fn add_id(&mut self, id: u32) {
-    self.fbb_.push_slot::<u32>(OutputId::VT_ID, id, 0);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> OutputIdBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    OutputIdBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<OutputId<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-pub enum OutputIdV3Offset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct OutputIdV3<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for OutputIdV3<'a> {
-    type Inner = OutputIdV3<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> OutputIdV3<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        OutputIdV3 {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args OutputIdV3Args<'args>) -> flatbuffers::WIPOffset<OutputIdV3<'bldr>> {
-      let mut builder = OutputIdV3Builder::new(_fbb);
-      if let Some(x) = args.v3 { builder.add_v3(x); }
-      builder.add_id(args.id);
-      builder.add_kind(args.kind);
-      builder.finish()
-    }
-
-    pub const VT_KIND: flatbuffers::VOffsetT = 4;
-    pub const VT_ID: flatbuffers::VOffsetT = 6;
-    pub const VT_V3: flatbuffers::VOffsetT = 8;
-
-  #[inline]
-  pub fn kind(&self) -> OutputKind {
-    self._tab.get::<OutputKind>(OutputIdV3::VT_KIND, Some(OutputKind::Started)).unwrap()
-  }
-  #[inline]
-  pub fn id(&self) -> u32 {
-    self._tab.get::<u32>(OutputIdV3::VT_ID, Some(0)).unwrap()
-  }
-  #[inline]
-  pub fn v3(&self) -> Option<&'a V3> {
-    self._tab.get::<V3>(OutputIdV3::VT_V3, None)
-  }
-}
-
-pub struct OutputIdV3Args<'a> {
-    pub kind: OutputKind,
-    pub id: u32,
-    pub v3: Option<&'a  V3>,
-}
-impl<'a> Default for OutputIdV3Args<'a> {
-    #[inline]
-    fn default() -> Self {
-        OutputIdV3Args {
-            kind: OutputKind::Started,
-            id: 0,
-            v3: None,
-        }
-    }
-}
-pub struct OutputIdV3Builder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> OutputIdV3Builder<'a, 'b> {
-  #[inline]
-  pub fn add_kind(&mut self, kind: OutputKind) {
-    self.fbb_.push_slot::<OutputKind>(OutputIdV3::VT_KIND, kind, OutputKind::Started);
-  }
-  #[inline]
-  pub fn add_id(&mut self, id: u32) {
-    self.fbb_.push_slot::<u32>(OutputIdV3::VT_ID, id, 0);
-  }
-  #[inline]
-  pub fn add_v3(&mut self, v3: &'b  V3) {
-    self.fbb_.push_slot_always::<&V3>(OutputIdV3::VT_V3, v3);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> OutputIdV3Builder<'a, 'b> {
-    let start = _fbb.start_table();
-    OutputIdV3Builder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<OutputIdV3<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-pub enum OutputsOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct Outputs<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for Outputs<'a> {
-    type Inner = Outputs<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> Outputs<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        Outputs {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args OutputsArgs<'args>) -> flatbuffers::WIPOffset<Outputs<'bldr>> {
-      let mut builder = OutputsBuilder::new(_fbb);
-      if let Some(x) = args.outputs_idv3 { builder.add_outputs_idv3(x); }
-      if let Some(x) = args.outputs_id { builder.add_outputs_id(x); }
-      if let Some(x) = args.outputs_empty { builder.add_outputs_empty(x); }
-      builder.finish()
-    }
-
-    pub const VT_OUTPUTS_EMPTY: flatbuffers::VOffsetT = 4;
-    pub const VT_OUTPUTS_ID: flatbuffers::VOffsetT = 6;
-    pub const VT_OUTPUTS_IDV3: flatbuffers::VOffsetT = 8;
-
-  #[inline]
-  pub fn outputs_empty(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<OutputEmpty<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<OutputEmpty<'a>>>>>(Outputs::VT_OUTPUTS_EMPTY, None)
-  }
-  #[inline]
-  pub fn outputs_id(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<OutputId<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<OutputId<'a>>>>>(Outputs::VT_OUTPUTS_ID, None)
-  }
-  #[inline]
-  pub fn outputs_idv3(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<OutputIdV3<'a>>>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<OutputIdV3<'a>>>>>(Outputs::VT_OUTPUTS_IDV3, None)
-  }
-}
-
-pub struct OutputsArgs<'a> {
-    pub outputs_empty: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<OutputEmpty<'a >>>>>,
-    pub outputs_id: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<OutputId<'a >>>>>,
-    pub outputs_idv3: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<OutputIdV3<'a >>>>>,
-}
-impl<'a> Default for OutputsArgs<'a> {
-    #[inline]
-    fn default() -> Self {
-        OutputsArgs {
-            outputs_empty: None,
-            outputs_id: None,
-            outputs_idv3: None,
-        }
-    }
-}
-pub struct OutputsBuilder<'a: 'b, 'b> {
-  fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-  start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
-}
-impl<'a: 'b, 'b> OutputsBuilder<'a, 'b> {
-  #[inline]
-  pub fn add_outputs_empty(&mut self, outputs_empty: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<OutputEmpty<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Outputs::VT_OUTPUTS_EMPTY, outputs_empty);
-  }
-  #[inline]
-  pub fn add_outputs_id(&mut self, outputs_id: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<OutputId<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Outputs::VT_OUTPUTS_ID, outputs_id);
-  }
-  #[inline]
-  pub fn add_outputs_idv3(&mut self, outputs_idv3: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<OutputIdV3<'b >>>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Outputs::VT_OUTPUTS_IDV3, outputs_idv3);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> OutputsBuilder<'a, 'b> {
-    let start = _fbb.start_table();
-    OutputsBuilder {
-      fbb_: _fbb,
-      start_: start,
-    }
-  }
-  #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<Outputs<'a>> {
-    let o = self.fbb_.end_table(self.start_);
-    flatbuffers::WIPOffset::new(o.value())
-  }
-}
-
-pub enum MessageOffset {}
-#[derive(Copy, Clone, Debug, PartialEq)]
-
-pub struct Message<'a> {
-  pub _tab: flatbuffers::Table<'a>,
-}
-
-impl<'a> flatbuffers::Follow<'a> for Message<'a> {
-    type Inner = Message<'a>;
-    #[inline]
-    fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-        Self {
-            _tab: flatbuffers::Table { buf: buf, loc: loc },
-        }
-    }
-}
-
-impl<'a> Message<'a> {
-    #[inline]
-    pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        Message {
-            _tab: table,
-        }
-    }
-    #[allow(unused_mut)]
-    pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
-        _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args MessageArgs<'args>) -> flatbuffers::WIPOffset<Message<'bldr>> {
-      let mut builder = MessageBuilder::new(_fbb);
+        args: &'args MessagesArgs<'args>) -> flatbuffers::WIPOffset<Messages<'bldr>> {
+      let mut builder = MessagesBuilder::new(_fbb);
       if let Some(x) = args.output { builder.add_output(x); }
       if let Some(x) = args.input { builder.add_input(x); }
       builder.finish()
@@ -766,75 +116,75 @@ impl<'a> Message<'a> {
     pub const VT_OUTPUT: flatbuffers::VOffsetT = 6;
 
   #[inline]
-  pub fn input(&self) -> Option<Inputs<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<Inputs<'a>>>(Message::VT_INPUT, None)
+  pub fn input(&self) -> Option<&'a [V2]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<V2>>>(Messages::VT_INPUT, None).map(|v| v.safe_slice() )
   }
   #[inline]
-  pub fn output(&self) -> Option<Outputs<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<Outputs<'a>>>(Message::VT_OUTPUT, None)
+  pub fn output(&self) -> Option<&'a [V2]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<V2>>>(Messages::VT_OUTPUT, None).map(|v| v.safe_slice() )
   }
 }
 
-pub struct MessageArgs<'a> {
-    pub input: Option<flatbuffers::WIPOffset<Inputs<'a >>>,
-    pub output: Option<flatbuffers::WIPOffset<Outputs<'a >>>,
+pub struct MessagesArgs<'a> {
+    pub input: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , V2>>>,
+    pub output: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , V2>>>,
 }
-impl<'a> Default for MessageArgs<'a> {
+impl<'a> Default for MessagesArgs<'a> {
     #[inline]
     fn default() -> Self {
-        MessageArgs {
+        MessagesArgs {
             input: None,
             output: None,
         }
     }
 }
-pub struct MessageBuilder<'a: 'b, 'b> {
+pub struct MessagesBuilder<'a: 'b, 'b> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> MessageBuilder<'a, 'b> {
+impl<'a: 'b, 'b> MessagesBuilder<'a, 'b> {
   #[inline]
-  pub fn add_input(&mut self, input: flatbuffers::WIPOffset<Inputs<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Inputs>>(Message::VT_INPUT, input);
+  pub fn add_input(&mut self, input: flatbuffers::WIPOffset<flatbuffers::Vector<'b , V2>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Messages::VT_INPUT, input);
   }
   #[inline]
-  pub fn add_output(&mut self, output: flatbuffers::WIPOffset<Outputs<'b >>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<Outputs>>(Message::VT_OUTPUT, output);
+  pub fn add_output(&mut self, output: flatbuffers::WIPOffset<flatbuffers::Vector<'b , V2>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Messages::VT_OUTPUT, output);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> MessageBuilder<'a, 'b> {
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> MessagesBuilder<'a, 'b> {
     let start = _fbb.start_table();
-    MessageBuilder {
+    MessagesBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<Message<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<Messages<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
 }
 
 #[inline]
-pub fn get_root_as_message<'a>(buf: &'a [u8]) -> Message<'a> {
-  flatbuffers::get_root::<Message<'a>>(buf)
+pub fn get_root_as_messages<'a>(buf: &'a [u8]) -> Messages<'a> {
+  flatbuffers::get_root::<Messages<'a>>(buf)
 }
 
 #[inline]
-pub fn get_size_prefixed_root_as_message<'a>(buf: &'a [u8]) -> Message<'a> {
-  flatbuffers::get_size_prefixed_root::<Message<'a>>(buf)
+pub fn get_size_prefixed_root_as_messages<'a>(buf: &'a [u8]) -> Messages<'a> {
+  flatbuffers::get_size_prefixed_root::<Messages<'a>>(buf)
 }
 
 #[inline]
-pub fn finish_message_buffer<'a, 'b>(
+pub fn finish_messages_buffer<'a, 'b>(
     fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>,
-    root: flatbuffers::WIPOffset<Message<'a>>) {
+    root: flatbuffers::WIPOffset<Messages<'a>>) {
   fbb.finish(root, None);
 }
 
 #[inline]
-pub fn finish_size_prefixed_message_buffer<'a, 'b>(fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>, root: flatbuffers::WIPOffset<Message<'a>>) {
+pub fn finish_size_prefixed_messages_buffer<'a, 'b>(fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>, root: flatbuffers::WIPOffset<Messages<'a>>) {
   fbb.finish_size_prefixed(root, None);
 }
 }  // pub mod messages

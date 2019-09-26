@@ -1,7 +1,7 @@
 ﻿<Properties StartupConfiguration="{60F2ACAC-BA8B-42AF-9295-F3C89FD7D6E6}|Default">
-  <MonoDevelop.Ide.Workbench ActiveDocument="test-csharp-rust/Program.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="test-csharp-rust/messages/Inputs.cs">
     <Files>
-      <File FileName="test-csharp-rust/Program.cs" Line="60" Column="1" />
+      <File FileName="test-csharp-rust/messages/Inputs.cs" Line="20" Column="9" />
     </Files>
     <Pads>
       <Pad Id="ProjectPad">
@@ -9,13 +9,16 @@
           <Node name="test-csharp-rust" expanded="True">
             <Node name="test-csharp-rust" expanded="True">
               <Node name="References" expanded="True" />
+              <Node name="messages" expanded="True">
+                <Node name="Inputs.cs" selected="True" />
+              </Node>
+              <Node name="net" expanded="True">
+                <Node name="FlatBuffers" expanded="True" />
+              </Node>
               <Node name="Properties" expanded="True" />
             </Node>
           </Node>
         </State>
-      </Pad>
-      <Pad Id="MonoDevelop.Debugger.WatchPad">
-        <State />
       </Pad>
     </Pads>
   </MonoDevelop.Ide.Workbench>
