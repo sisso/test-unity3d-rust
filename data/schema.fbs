@@ -1,8 +1,63 @@
-namespace users;
+namespace messages;
 
-table User {
-  name:string;
-  id:ulong;
+// -------------------------------------------
+
+struct V3 {
+  x: float;
+  y: float;
+  z: float;
 }
 
-root_type User;
+// -------------------------------------------
+enum InputKind: short {
+  Start,
+  Reset
+}
+
+table InputEmpty {
+  kind: InputKind;
+}
+
+table Inputs {
+  inputs: [InputEmpty];
+}
+
+// -------------------------------------------
+
+enum OutputKind: short {
+  Started,
+  Reseted,
+  Created,
+  Updated,
+  Removed
+}
+
+table OutputEmpty {
+  kind: OutputKind;
+}
+
+table OutputId {
+  kind: OutputKind;
+  id: uint;
+}
+
+table OutputIdV3 {
+  kind: OutputKind;
+  id: uint;
+  v3: V3;
+}
+
+table Outputs {
+  outputs_empty: [OutputEmpty];
+  outputs_id: [OutputId];
+  outputs_idv3: [OutputIdV3];
+}
+
+// -------------------------------------------
+
+table Message {
+  input: Inputs;
+  output: Outputs;
+}
+
+root_type Message;
