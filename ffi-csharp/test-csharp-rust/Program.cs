@@ -174,19 +174,17 @@ namespace testcsharprust
 
         public byte[] GetArray()
         {
-            byte[] bytes = new byte[0] { };
+            byte[] bytes = null;
 
             FFI.context_get_array(this.handler, (ptr, length) =>
             {
-                bytes = new byte[length];
-
-                for (int i = 0; i < length; i++)
-                {
-                    byte b = Marshal.ReadByte(ptr);
-                    bytes[i] = b;
-                    ptr += 1;
-                }
+                bytes = ToByteArray(ptr, length);
             });
+
+            if (bytes == null)
+            {
+                throw new Exception("Null");
+            }
 
             return bytes;
         }
@@ -246,7 +244,6 @@ namespace testcsharprust
 
         public void SetFlatBuffers(int[][] vectors)
         {
-
             var builder = new FlatBufferBuilder(1024);
             messages.Messages.StartInputVector(builder, vectors.Length);
             for (int i = 0; i < vectors.Length; i++)
@@ -272,13 +269,7 @@ namespace testcsharprust
             FFI.context_get_flatbuffer(this.handler, (ptr, length) =>
             {
                 // copy bytes
-                var bytes = new byte[length];
-                for (int i = 0; i < length; i++)
-                {
-                    byte b = Marshal.ReadByte(ptr);
-                    bytes[i] = b;
-                    ptr += 1;
-                }
+                var bytes = ToByteArray(ptr, length);
 
                 // unmarshlar
                 var buffer = new ByteBuffer(bytes);
@@ -295,6 +286,14 @@ namespace testcsharprust
             });
 
             return result;
+        }
+
+        private static byte[] ToByteArray(IntPtr ptr, uint length)
+        {
+            int len = Convert.ToInt32(length);
+            var bytes = new byte[len];
+            Marshal.Copy(ptr, bytes, 0, len);
+            return bytes;
         }
     }
 
