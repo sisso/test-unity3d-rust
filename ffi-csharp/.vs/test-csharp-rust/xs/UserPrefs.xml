@@ -1,7 +1,7 @@
 ﻿<Properties StartupConfiguration="{60F2ACAC-BA8B-42AF-9295-F3C89FD7D6E6}|Default">
-  <MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.Workbench ActiveDocument="test-csharp-rust/Program.cs">
     <Files>
-      <File FileName="test-csharp-rust/Program.cs" Line="181" Column="59" />
+      <File FileName="test-csharp-rust/Program.cs" Line="432" Column="6" />
       <File FileName="test-csharp-rust/FlatBuffers/ByteBufferUtil.cs" Line="24" Column="26" />
       <File FileName="test-csharp-rust/FlatBuffers/FlatBufferBuilder.cs" Line="739" Column="10" />
       <File FileName="test-csharp-rust/FlatBuffers/Offset.cs" Line="25" Column="16" />
@@ -21,9 +21,6 @@
             </Node>
           </Node>
         </State>
-      </Pad>
-      <Pad Id="MonoDevelop.Debugger.WatchPad">
-        <State />
       </Pad>
     </Pads>
   </MonoDevelop.Ide.Workbench>

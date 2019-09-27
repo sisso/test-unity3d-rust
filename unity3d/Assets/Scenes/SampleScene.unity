@@ -365,7 +365,7 @@ GameObject:
   - component: {fileID: 1601594594}
   - component: {fileID: 1601594593}
   m_Layer: 0
-  m_Name: RustProxy
+  m_Name: Root
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -384,6 +384,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   target: {fileID: 171456989}
+  state: 0
 --- !u!4 &1601594594
 Transform:
   m_ObjectHideFlags: 0
