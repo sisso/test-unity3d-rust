@@ -1,4 +1,4 @@
-#! /bin/bash
+#!/bin/bash
 set -euo pipefail
 WORK_DIR="$(pwd)"
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)

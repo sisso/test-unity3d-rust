@@ -2,50 +2,50 @@
 using System;
 using FlatBuffers;
 
-namespace Domain
+namespace TestFFI.Domain
 {
     static class FFI
     {
         [DllImport("librustlib.so", CharSet = CharSet.Unicode)]
-        internal static extern Int32 add_numbers(Int32 a, Int32 b);
+        internal static extern Int32 test_ffi_add_numbers(Int32 a, Int32 b);
 
         [DllImport("librustlib.so", CharSet = CharSet.Unicode)]
-        internal static extern ContextHandler context_create();
+        internal static extern ContextHandler test_ffi_context_create();
         [DllImport("librustlib.so", CharSet = CharSet.Unicode)]
-        internal static extern void context_close(IntPtr ptr);
+        internal static extern void test_ffi_context_close(IntPtr ptr);
 
         [DllImport("librustlib.so", CharSet = CharSet.Unicode)]
-        internal static extern bool free_string(IntPtr ptr);
-
-        [DllImport("librustlib.so")]
-        internal static extern bool context_set_string(ContextHandler ptr, string str);
-        [DllImport("librustlib.so", CharSet = CharSet.Unicode)]
-        internal static extern FFIStringHandler context_get_string(ContextHandler ptr);
+        internal static extern bool test_ffi_free_string(IntPtr ptr);
 
         [DllImport("librustlib.so")]
-        internal static extern bool context_set_struct(ContextHandler ptr, V2 v2);
+        internal static extern bool test_ffi_context_set_string(ContextHandler ptr, string str);
         [DllImport("librustlib.so", CharSet = CharSet.Unicode)]
-        internal static extern V2 context_get_struct(ContextHandler ptr);
+        internal static extern FFIStringHandler test_ffi_context_get_string(ContextHandler ptr);
 
         [DllImport("librustlib.so")]
-        internal static extern bool context_set_array(ContextHandler ptr, byte[] buffer, UInt32 len);
+        internal static extern bool test_ffi_context_set_struct(ContextHandler ptr, V2 v2);
         [DllImport("librustlib.so", CharSet = CharSet.Unicode)]
-        internal static extern bool context_get_array(ContextHandler ptr, Action<IntPtr, UInt32> callback);
+        internal static extern V2 test_ffi_context_get_struct(ContextHandler ptr);
 
         [DllImport("librustlib.so")]
-        internal static extern bool context_set_struct_array(ContextHandler ptr, V2[] buffer, UInt32 len);
+        internal static extern bool test_ffi_context_set_array(ContextHandler ptr, byte[] buffer, UInt32 len);
         [DllImport("librustlib.so", CharSet = CharSet.Unicode)]
-        internal static extern bool context_get_struct_array(ContextHandler ptr, Action<IntPtr, UInt32> callback);
+        internal static extern bool test_ffi_context_get_array(ContextHandler ptr, Action<IntPtr, UInt32> callback);
 
         [DllImport("librustlib.so")]
-        internal static extern bool context_set_people(ContextHandler ptr, [In] FFIPerson[] buffer, UInt32 len);
+        internal static extern bool test_ffi_context_set_struct_array(ContextHandler ptr, V2[] buffer, UInt32 len);
         [DllImport("librustlib.so", CharSet = CharSet.Unicode)]
-        internal static extern bool context_get_people(ContextHandler ptr, Action<IntPtr, UInt32> callback);
+        internal static extern bool test_ffi_context_get_struct_array(ContextHandler ptr, Action<IntPtr, UInt32> callback);
 
         [DllImport("librustlib.so")]
-        internal static extern bool context_set_flatbuffer(ContextHandler ptr, byte[] buffer, UInt32 len);
+        internal static extern bool test_ffi_context_set_people(ContextHandler ptr, [In] FFIPerson[] buffer, UInt32 len);
         [DllImport("librustlib.so", CharSet = CharSet.Unicode)]
-        internal static extern bool context_get_flatbuffer(ContextHandler ptr, Action<IntPtr, UInt32> callback);
+        internal static extern bool test_ffi_context_get_people(ContextHandler ptr, Action<IntPtr, UInt32> callback);
+
+        [DllImport("librustlib.so")]
+        internal static extern bool test_ffi_context_set_flatbuffer(ContextHandler ptr, byte[] buffer, UInt32 len);
+        [DllImport("librustlib.so", CharSet = CharSet.Unicode)]
+        internal static extern bool test_ffi_context_get_flatbuffer(ContextHandler ptr, Action<IntPtr, UInt32> callback);
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -105,7 +105,7 @@ namespace Domain
 
         protected override bool ReleaseHandle()
         {
-            FFI.free_string(handle);
+            FFI.test_ffi_free_string(handle);
             return true;
         }
     }
@@ -126,7 +126,7 @@ namespace Domain
 
         protected override bool ReleaseHandle()
         {
-            FFI.context_close(handle);
+            FFI.test_ffi_context_close(handle);
             return true;
         }
     }
@@ -137,7 +137,7 @@ namespace Domain
 
         public Context()
         {
-            this.handler = FFI.context_create();
+            this.handler = FFI.test_ffi_context_create();
         }
 
         public void Dispose()
@@ -147,35 +147,35 @@ namespace Domain
 
         public void SetString(String str)
         {
-            FFI.context_set_string(this.handler, str);
+            FFI.test_ffi_context_set_string(this.handler, str);
         }
 
         public string GetString()
         {
-            var str = FFI.context_get_string(this.handler);
+            var str = FFI.test_ffi_context_get_string(this.handler);
             return str.AsString();
         }
 
         public void SetV2(V2 v2)
         {
-            FFI.context_set_struct(this.handler, v2);
+            FFI.test_ffi_context_set_struct(this.handler, v2);
         }
 
         public V2 GetV2()
         {
-            return FFI.context_get_struct(this.handler);
+            return FFI.test_ffi_context_get_struct(this.handler);
         }
 
         public void SetArray(byte[] bytes)
         {
-            FFI.context_set_array(this.handler, bytes, Convert.ToUInt32(bytes.Length));
+            FFI.test_ffi_context_set_array(this.handler, bytes, Convert.ToUInt32(bytes.Length));
         }
 
         public byte[] GetArray()
         {
             byte[] bytes = null;
 
-            FFI.context_get_array(this.handler, (ptr, length) =>
+            FFI.test_ffi_context_get_array(this.handler, (ptr, length) =>
             {
                 bytes = ToByteArray(ptr, length);
             });
@@ -190,14 +190,14 @@ namespace Domain
 
         public void SetStructArray(V2[] array)
         {
-            FFI.context_set_struct_array(this.handler, array, Convert.ToUInt32(array.Length));
+            FFI.test_ffi_context_set_struct_array(this.handler, array, Convert.ToUInt32(array.Length));
         }
 
         public V2[] GetStructArray()
         {
             V2[] array = new V2[0] { };
 
-            FFI.context_get_struct_array(this.handler, (ptr, length) =>
+            FFI.test_ffi_context_get_struct_array(this.handler, (ptr, length) =>
             {
                 var size = Marshal.SizeOf<V2>();
                 array = new V2[length];
@@ -215,14 +215,14 @@ namespace Domain
 
         public void SetPeople(FFIPerson[] people)
         {
-            FFI.context_set_people(this.handler, people, Convert.ToUInt32(people.Length));
+            FFI.test_ffi_context_set_people(this.handler, people, Convert.ToUInt32(people.Length));
         }
 
         public FFIPerson[] GetPeople()
         {
             FFIPerson[] array = null;
 
-            FFI.context_get_people(this.handler, (ptr, length) =>
+            FFI.test_ffi_context_get_people(this.handler, (ptr, length) =>
             {
                 var size = Marshal.SizeOf<FFIPerson>();
                 array = new FFIPerson[length];
@@ -258,14 +258,14 @@ namespace Domain
 
             // TODO: remove copy
             var bytes = builder.SizedByteArray();
-            FFI.context_set_flatbuffer(this.handler, bytes, Convert.ToUInt32(bytes.Length));
+            FFI.test_ffi_context_set_flatbuffer(this.handler, bytes, Convert.ToUInt32(bytes.Length));
         }
 
         public int[][] GetFlatBuffers()
         {
             int[][] result = null;
 
-            FFI.context_get_flatbuffer(this.handler, (ptr, length) =>
+            FFI.test_ffi_context_get_flatbuffer(this.handler, (ptr, length) =>
             {
                 // copy bytes
                 var bytes = ToByteArray(ptr, length);

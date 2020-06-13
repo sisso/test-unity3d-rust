@@ -4,3 +4,6 @@ Project result from some experiments using unity3d and rust through FFI. Only fo
 
 The selected solution was share temporary byte arrays between languages and use Flattbuffer to encode/decode data.
 
+# Scripts
+
+All scripts should run from GIT root folder

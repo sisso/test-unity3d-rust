@@ -1,9 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Domain;
+using TestFFI.Domain;
 using System;
 
+namespace TestFFI.Gui {
 public class GameScript : MonoBehaviour
 {
     public GameObject target;
@@ -34,7 +35,7 @@ public class GameScript : MonoBehaviour
     // TODO: move to automatic tests
     static void AddNumberTest()
     {
-        var result = FFI.add_numbers(1, 3);
+        var result = FFI.test_ffi_add_numbers(1, 3);
         // Debug.Log("AddNumberTest " + result);
         Assert(result == 4);
     }
@@ -156,4 +157,5 @@ public class GameScript : MonoBehaviour
         SendAndReceivePeopleTest(context);
         SendAndReceiveFlatBuffersTest(context);
     }
+}
 }
