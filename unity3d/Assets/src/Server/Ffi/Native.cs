@@ -3,6 +3,9 @@ using System;
 using System.Collections.Generic;
 using FlatBuffers;
 
+///
+/// FFI implementation of local server
+/// 
 namespace Server.Ffi
 {
     static class Native

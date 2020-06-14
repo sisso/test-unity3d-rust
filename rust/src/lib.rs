@@ -3,9 +3,8 @@ pub mod debug;
 pub mod ffi_utils;
 pub mod schemas;
 pub mod server;
-pub mod server_ffi;
 
-use crate::server::{RawMsg, Server};
+use crate::server::{server_ffi, RawMsg, ServerConnector};
 
 use ffi_utils::*;
 use flatbuffers::FlatBufferBuilder;
@@ -48,10 +47,7 @@ pub extern "C" fn server_ffi_push(
     // debug!("server_ffi_push {:?}: {:?}", ctx.get_control_value(), value);
     match ctx.push(FFI_USER_ID, ref_data) {
         Err(err) => {
-            debug!(
-                "server_ffi_push fail: {:?}",
-                err
-            );
+            debug!("server_ffi_push fail: {:?}", err);
             false
         }
         _ => true,
@@ -68,10 +64,7 @@ pub extern "C" fn server_ffi_take(
     match ctx.take(FFI_USER_ID) {
         Ok(messages) => {
             for msg in messages {
-                callback(
-                    msg.as_ptr(),
-                    msg.len() as u32,
-                );
+                callback(msg.as_ptr(), msg.len() as u32);
             }
             true
         }

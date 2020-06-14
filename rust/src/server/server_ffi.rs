@@ -2,14 +2,19 @@
     Implementing the server by FFI
 */
 
-use crate::server::{RawMsg, Result, Server, RawMsgBuffer};
+use crate::server::{RawMsg, RawMsgBuffer, Result, Server, ServerConnector};
 
 #[derive(Debug)]
-pub struct FfiContext {}
+pub struct FfiContext {
+    /// embedded server
+    server: Server,
+}
 
 impl<'a> FfiContext {
     pub fn new() -> Self {
-        FfiContext {}
+        FfiContext {
+            server: Default::default(),
+        }
     }
 
     pub fn from_ptr(ptr: *mut FfiContext) -> &'a mut FfiContext {
@@ -19,7 +24,7 @@ impl<'a> FfiContext {
     }
 }
 
-impl Server for FfiContext {
+impl ServerConnector for FfiContext {
     fn push(&mut self, user_id: u16, msg: &RawMsg) -> Result<()> {
         unimplemented!()
     }
