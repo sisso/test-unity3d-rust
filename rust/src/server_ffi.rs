@@ -2,7 +2,7 @@
     Implementing the server by FFI
 */
 
-use crate::server::{RawMsg, Result, Server};
+use crate::server::{RawMsg, Result, Server, RawMsgBuffer};
 
 #[derive(Debug)]
 pub struct FfiContext {}
@@ -25,7 +25,7 @@ impl Server for FfiContext {
     }
 
     // TODO: receive a closure?
-    fn take(&mut self, user_id: u16) -> Result<Vec<RawMsg>> {
+    fn take(&mut self, user_id: u16) -> Result<Vec<RawMsgBuffer>> {
         unimplemented!()
     }
 }

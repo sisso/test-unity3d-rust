@@ -6,7 +6,7 @@ edition = "2018"
 
 # need to be commented to run example or tests :/
 [lib]
-name="rustlib"
+name="ffi_server"
 crate-type = ["cdylib"]
 
 [dependencies]

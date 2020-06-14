@@ -1,17 +1,18 @@
 // uncomment clib in Cargo.toml to work
 
-//extern crate flatbuffers;
-//extern crate rustlib;
+// extern crate flatbuffers;
+// extern crate rustlib;
 //
-//use rustlib::schema_generated;
+// use rustlib::schemas::{server_state_generated, server_generated};
 //
-//use flatbuffers::{FlatBufferBuilder, WIPOffset};
-//use schema_generated::messages;
+// use flatbuffers::{FlatBufferBuilder, WIPOffset};
 //
-//#[test]
-//fn test_schema_serialization() {
+// #[test]
+// fn test_schema_serialization() {
 //    let bytes = {
 //        let mut bd = FlatBufferBuilder::new();
+//
+//        let kind = server_generated::fb_server::Kind::RequestLogin;
 //
 //        let points = vec![
 //            messages::V2::new(23, 54),
@@ -42,5 +43,5 @@
 //        assert_eq!(messages.output().unwrap()[1].x(), 32);
 //        assert_eq!(messages.output().unwrap()[1].y(), 45);
 //    }
-//}
-//
+// }
+

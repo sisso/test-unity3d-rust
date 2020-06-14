@@ -1,0 +1,18 @@
+namespace server;
+
+enum PackageKind : byte {
+	RequestLogin = 0,
+	ResponseLogin,
+	RequestChange,
+	ResponseChange,
+}
+
+enum ChangeKind : uint16 {
+	Spawn = 0,
+	Pos,
+	GenericU32,
+	GenericI32,
+	GenericStr,
+	GenericF32
+}
+
