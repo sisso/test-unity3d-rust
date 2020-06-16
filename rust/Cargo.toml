@@ -7,7 +7,7 @@ edition = "2018"
 # need to be commented to run example or tests :/
 [lib]
 name="rustlib"
-crate-type = ["cdylib"]
+crate-type = ["lib", "cdylib"]
 
 [dependencies]
 libc = "*"
