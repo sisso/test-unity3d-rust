@@ -16,6 +16,11 @@ Server impl deal with bytes
 
 # Namespaces
 
+Package
+kind: u16
+bytes[]
+
+
 ## Domain
 
 Responsible for game logic. Can be faked or connect to the logic by a FFI library.

@@ -7,7 +7,7 @@ edition = "2018"
 # need to be commented to run example or tests :/
 [lib]
 name="ffi_server"
-crate-type = ["cdylib"]
+crate-type = ["bin", "lib", "cdylib"]
 
 [dependencies]
 libc = "*"

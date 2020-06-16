@@ -6,7 +6,6 @@ using UnityEngine;
 
 namespace Domain
 {
-
     /// <summary>
     /// Game logic implemented by a Server
     /// </summary>
@@ -14,7 +13,7 @@ namespace Domain
     {
         private Ffi.Context ffi;
 
-        private List<IEvent> events = new List<IEvent>();
+        private List<IEvent> receivedEvents = new List<IEvent>();
 
         void OnDestroy()
         {
@@ -36,8 +35,7 @@ namespace Domain
         {
             foreach (var package in ffi.Take())
             {
-                var buffer = new BinaryReader(new MemoryStream(package));
-                var packageKindId = buffer.ReadInt16();
+                var buffer = new BinaryReader(new MemoryStream(package)); var packageKindId = buffer.ReadInt16();
                 var packageKind = (PackageKind) packageKindId;
                 
                 switch (packageKind)
@@ -47,7 +45,7 @@ namespace Domain
                     
                     case PackageKind.ResponseChange:
                         var e = ParseResponseChange(buffer);
-                        events.Add(e);
+                        receivedEvents.Add(e);
                         break;
                 }
             }
@@ -55,22 +53,17 @@ namespace Domain
 
         public List<IEvent> TakeEvents()
         {
-            var result = this.events;
-            this.events = new List<IEvent>();
+            var result = this.receivedEvents;
+            this.receivedEvents = new List<IEvent>();
             return result;
         }
 
         private IEvent ParseResponseChange(BinaryReader buffer)
         {
-            var str = Byte2String(buffer.ReadBytes());
+            var str = Byte2String(buffer.ReadBytes(Int32.MaxValue));
             var args = str.Split('\n');
             switch (args[0])
             {
-                case "load_scene":
-                {
-                    return new EventLoadScene() {sceneName = args[1]};
-                }
-                
                 case "spawn":
                 {
                     var id = ParseId(args[1]);
