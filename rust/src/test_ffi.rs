@@ -49,12 +49,6 @@ impl<'a> FfiContext {
         }
     }
 
-    pub fn from_ptr(ptr: *mut FfiContext) -> &'a mut FfiContext {
-        assert!(!ptr.is_null());
-
-        unsafe { &mut *ptr }
-    }
-
     pub fn get_control_value(&self) -> i32 {
         self.control
     }

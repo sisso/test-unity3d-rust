@@ -13,114 +13,23 @@ use flatbuffers::FlatBufferBuilder;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 
-// -------------------------------------------------------------------------------------------------
-// server_ffi
-// -------------------------------------------------------------------------------------------------
-
-const FFI_USER_ID: u16 = 0;
-
 #[no_mangle]
-pub extern "C" fn server_ffi_context_create() -> *mut server_ffi::FfiContext {
-    let context = server_ffi::FfiContext::new();
-
-    debug!("context_create {:?}", context);
-
-    Box::into_raw(Box::new(context))
-}
-
-#[no_mangle]
-pub extern "C" fn server_ffi_context_close(ctx_ptr: *mut server_ffi::FfiContext) {
-    if ctx_ptr.is_null() {
-        return;
-    }
-    let ctx = unsafe {
-        Box::from_raw(ctx_ptr);
-    };
-    debug!("context_close {:?}", ctx);
-}
-
-pub extern "C" fn server_ffi_push(
-    ctx_ptr: *mut server_ffi::FfiContext,
-    namespace: u16,
-    kind: u16,
-    buffer: *mut u8,
-    length: u32,
-) -> bool {
-    let ctx = server_ffi::FfiContext::from_ptr(ctx_ptr);
-    let ref_data = to_slice(buffer, length);
-    // debug!("server_ffi_push {:?}: {:?}", ctx.get_control_value(), value);
-    match ctx.push(
-        FFI_USER_ID,
-        &RawMsg {
-            namespace,
-            kind,
-            body: ref_data,
-        },
-    ) {
-        Err(err) => {
-            debug!(
-                "server_ffi_push fail for ({:?}, {:?}, {:?}): {:?}",
-                namespace, kind, ref_data, err
-            );
-            false
-        }
-        _ => true,
-    }
-}
-
-#[no_mangle]
-pub extern "C" fn server_ffi_take(
-    ctx_ptr: *mut server_ffi::FfiContext,
-    callback: extern "stdcall" fn(u16, u16, *const u8, u32),
-) -> bool {
-    let ctx = server_ffi::FfiContext::from_ptr(ctx_ptr);
-
-    match ctx.take(FFI_USER_ID) {
-        Ok(messages) => {
-            for msg in messages {
-                callback(
-                    msg.namespace,
-                    msg.kind,
-                    msg.body.as_ptr(),
-                    msg.body.len() as u32,
-                );
-            }
-            true
-        }
-
-        Err(err) => {
-            debug!("server_ffi_take fail: {:?}", err);
-            false
-        }
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-// test_ffi
-// -------------------------------------------------------------------------------------------------
-#[no_mangle]
-pub extern "C" fn test_ffi_context_create() -> *mut test_ffi::FfiContext {
+pub extern "C" fn test_ffi_context_create() -> Box<test_ffi::FfiContext> {
     let context = test_ffi::FfiContext::new();
 
     debug!("context_create {:?}", context);
 
-    Box::into_raw(Box::new(context))
+    Box::new(context)
 }
 
 #[no_mangle]
-pub extern "C" fn test_ffi_context_close(ctx_ptr: *mut test_ffi::FfiContext) {
-    if ctx_ptr.is_null() {
-        return;
-    }
-    let ctx = unsafe {
-        Box::from_raw(ctx_ptr);
-    };
+pub extern "C" fn test_ffi_context_close(ctx: Box<test_ffi::FfiContext>) {
     debug!("context_close {:?}", ctx);
 }
 
 #[no_mangle]
 pub extern "C" fn test_ffi_context_set_string(
-    ctx_ptr: *mut test_ffi::FfiContext,
+    ctx: &mut test_ffi::FfiContext,
     value: *const c_char,
 ) -> bool {
     let c_str = unsafe {
@@ -129,7 +38,7 @@ pub extern "C" fn test_ffi_context_set_string(
     };
 
     let value = c_str.to_str().unwrap();
-    let ctx = test_ffi::FfiContext::from_ptr(ctx_ptr);
+
     debug!(
         "context_set_string {:?}: {}",
         ctx.get_control_value(),
@@ -140,9 +49,7 @@ pub extern "C" fn test_ffi_context_set_string(
 }
 
 #[no_mangle]
-pub extern "C" fn test_ffi_context_get_string(ctx_ptr: *mut test_ffi::FfiContext) -> *mut c_char {
-    let ctx = test_ffi::FfiContext::from_ptr(ctx_ptr);
-
+pub extern "C" fn test_ffi_context_get_string(ctx: &mut test_ffi::FfiContext) -> *mut c_char {
     let value = ctx.string.take();
 
     debug!(
@@ -165,10 +72,9 @@ pub extern "C" fn test_ffi_context_get_string(ctx_ptr: *mut test_ffi::FfiContext
 
 #[no_mangle]
 pub extern "C" fn test_ffi_context_set_struct(
-    ctx_ptr: *mut test_ffi::FfiContext,
+    ctx: &mut test_ffi::FfiContext,
     value: test_ffi::V2,
 ) -> bool {
-    let ctx = test_ffi::FfiContext::from_ptr(ctx_ptr);
     debug!(
         "context_set_struct {:?}: {:?}",
         ctx.get_control_value(),
@@ -179,8 +85,7 @@ pub extern "C" fn test_ffi_context_set_struct(
 }
 
 #[no_mangle]
-pub extern "C" fn test_ffi_context_get_struct(ctx_ptr: *mut test_ffi::FfiContext) -> test_ffi::V2 {
-    let ctx = test_ffi::FfiContext::from_ptr(ctx_ptr);
+pub extern "C" fn test_ffi_context_get_struct(ctx: &mut test_ffi::FfiContext) -> test_ffi::V2 {
     let value = ctx.v2.take().unwrap_or(test_ffi::V2 { x: 0, y: 0 });
     debug!(
         "context_get_struct {:?}: {:?}",
@@ -192,11 +97,10 @@ pub extern "C" fn test_ffi_context_get_struct(ctx_ptr: *mut test_ffi::FfiContext
 
 #[no_mangle]
 pub extern "C" fn test_ffi_context_set_array(
-    ctx_ptr: *mut test_ffi::FfiContext,
+    ctx: &mut test_ffi::FfiContext,
     buffer: *mut u8,
     length: u32,
 ) -> bool {
-    let ctx = test_ffi::FfiContext::from_ptr(ctx_ptr);
     let ref_data = unsafe { std::slice::from_raw_parts(buffer, length as usize) };
     let value = ref_data.to_vec();
     debug!(
@@ -210,11 +114,9 @@ pub extern "C" fn test_ffi_context_set_array(
 
 #[no_mangle]
 pub extern "C" fn test_ffi_context_get_array(
-    ctx_ptr: *mut test_ffi::FfiContext,
+    ctx: &mut test_ffi::FfiContext,
     callback: extern "stdcall" fn(*mut u8, u32),
 ) -> bool {
-    let ctx = test_ffi::FfiContext::from_ptr(ctx_ptr);
-
     match ctx.array.take() {
         Some(mut value) => {
             debug!(
@@ -231,11 +133,10 @@ pub extern "C" fn test_ffi_context_get_array(
 
 #[no_mangle]
 pub extern "C" fn test_ffi_context_set_struct_array(
-    ctx_ptr: *mut test_ffi::FfiContext,
+    ctx: &mut test_ffi::FfiContext,
     buffer: *mut test_ffi::V2,
     length: u32,
 ) -> bool {
-    let ctx = test_ffi::FfiContext::from_ptr(ctx_ptr);
     let ref_data = to_slice(buffer, length);
     let value = ref_data.to_vec();
     debug!(
@@ -249,11 +150,9 @@ pub extern "C" fn test_ffi_context_set_struct_array(
 
 #[no_mangle]
 pub extern "C" fn test_ffi_context_get_struct_array(
-    ctx_ptr: *mut test_ffi::FfiContext,
+    ctx: &mut test_ffi::FfiContext,
     callback: extern "stdcall" fn(*mut test_ffi::V2, u32),
 ) -> bool {
-    let ctx = test_ffi::FfiContext::from_ptr(ctx_ptr);
-
     match ctx.v2_array.take() {
         Some(mut value) => {
             debug!(
@@ -270,11 +169,10 @@ pub extern "C" fn test_ffi_context_get_struct_array(
 
 #[no_mangle]
 pub extern "C" fn test_ffi_context_set_people(
-    ctx_ptr: *mut test_ffi::FfiContext,
+    ctx: &mut test_ffi::FfiContext,
     buffer: *const test_ffi::FFIPerson,
     length: u32,
 ) -> bool {
-    let ctx = test_ffi::FfiContext::from_ptr(ctx_ptr);
     let ref_data = to_slice(buffer, length);
     debug!(
         "context_set_persons {:?}: {:?}",
@@ -297,11 +195,9 @@ pub extern "C" fn test_ffi_context_set_people(
 
 #[no_mangle]
 pub extern "C" fn test_ffi_context_get_people(
-    ctx_ptr: *mut test_ffi::FfiContext,
+    ctx: &mut test_ffi::FfiContext,
     callback: extern "stdcall" fn(*mut test_ffi::FFIPerson, u32),
 ) -> bool {
-    let ctx = test_ffi::FfiContext::from_ptr(ctx_ptr);
-
     let people = &ctx.people;
     let len = people.len() as u32;
 
@@ -321,11 +217,10 @@ pub extern "C" fn test_ffi_context_get_people(
 
 #[no_mangle]
 pub extern "C" fn test_ffi_context_set_flatbuffer(
-    ctx_ptr: *mut test_ffi::FfiContext,
+    ctx: &mut test_ffi::FfiContext,
     buffer: *const u8,
     length: u32,
 ) -> bool {
-    let ctx = test_ffi::FfiContext::from_ptr(ctx_ptr);
     let ref_data = unsafe { std::slice::from_raw_parts(buffer, length as usize) };
 
     let root = messages::get_root_as_messages(ref_data);
@@ -347,11 +242,9 @@ pub extern "C" fn test_ffi_context_set_flatbuffer(
 
 #[no_mangle]
 pub extern "C" fn test_ffi_context_get_flatbuffer(
-    ctx_ptr: *mut test_ffi::FfiContext,
+    ctx: &mut test_ffi::FfiContext,
     callback: extern "stdcall" fn(*const u8, u32),
 ) -> bool {
-    let ctx = test_ffi::FfiContext::from_ptr(ctx_ptr);
-
     let mut b = FlatBufferBuilder::new();
 
     let vecs: Vec<messages::V2> = ctx
