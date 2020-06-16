@@ -1,53 +1,30 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using server;
-using Server;
-using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine;
-using UnityEngine.Analytics;
-using UnityEngine.UIElements.Experimental;
 
 namespace Domain
 {
-    public interface IEvent
-    {
-    }
 
-    public class EventLoadScene : IEvent
+    /// <summary>
+    /// Game logic implemented by a Server
+    /// </summary>
+    public class DomainFFI : MonoBehaviour, IDomain
     {
-        public string sceneName;
-    }
-
-    public class EventSpawn : IEvent
-    {
-        public int id;
-        public string prefab;
-        public Vector3 position;
-    }
-
-    public class EventPos : IEvent
-    {
-        public int id;
-        public Vector3 position;
-    }
-
-    public class DomainServer : MonoBehaviour, IDomain
-    {
-        private IServer server;
+        private Ffi.Context ffi;
 
         private List<IEvent> events = new List<IEvent>();
 
         void OnDestroy()
         {
             Debug.Log("Closing context");
-            server.Dispose();
-            server = null;
+            ffi.Dispose();
+            ffi = null;
         }
 
-        public void StartLocalServer()
-        {
-            server = new Server.LocalServer();
+        public void StartLocalServer() {
+            ffi = new Ffi.Context();
         }
 
         public void ConnectToServer(string remoteAddress)
@@ -57,15 +34,19 @@ namespace Domain
 
         public void Execute()
         {
-            foreach (var msg in server.Take())
+            foreach (var package in ffi.Take())
             {
-                switch (msg.kind)
+                var buffer = new BinaryReader(new MemoryStream(package));
+                var packageKindId = buffer.ReadInt16();
+                var packageKind = (PackageKind) packageKindId;
+                
+                switch (packageKind)
                 {
                     case PackageKind.ResponseLogin:
                         break;
                     
                     case PackageKind.ResponseChange:
-                        var e = ParseResponseChange(msg.body);
+                        var e = ParseResponseChange(buffer);
                         events.Add(e);
                         break;
                 }
@@ -79,9 +60,9 @@ namespace Domain
             return result;
         }
 
-        private IEvent ParseResponseChange(byte[] bytes)
+        private IEvent ParseResponseChange(BinaryReader buffer)
         {
-            var str = Byte2String(bytes);
+            var str = Byte2String(buffer.ReadBytes());
             var args = str.Split('\n');
             switch (args[0])
             {

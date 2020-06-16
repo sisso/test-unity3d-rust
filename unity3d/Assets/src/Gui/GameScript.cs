@@ -6,6 +6,7 @@ using System.Linq;
 using Server;
 using Domain;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 
 namespace Gui {
     public enum RunMode
@@ -22,7 +23,7 @@ namespace Gui {
         public string remoteAddress;
 
         public DomainFake fakePrefab;
-        public DomainServer serverPrefab;
+        [FormerlySerializedAs("serverPrefab")] public DomainFFI ffiPrefab;
         public GameObject playerPrefab;
         
         private IDomain current;
@@ -40,7 +41,7 @@ namespace Gui {
                 
                 case RunMode.Local:
                 {
-                    var server = Instantiate(serverPrefab);
+                    var server = Instantiate(ffiPrefab);
                     server.StartLocalServer();
                     current = server;
                     break;
@@ -48,7 +49,7 @@ namespace Gui {
                 
                 case RunMode.Remote:
                 {
-                    var server = Instantiate(serverPrefab);
+                    var server = Instantiate(ffiPrefab);
                     server.ConnectToServer(remoteAddress);
                     current = server;
                     break;

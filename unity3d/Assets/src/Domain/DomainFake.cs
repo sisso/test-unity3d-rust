@@ -3,6 +3,9 @@ using UnityEngine;
 
 namespace Domain
 {
+    /// <summary>
+    /// Domain logic implemented fake for local testing
+    /// </summary>
     public class DomainFake : MonoBehaviour, IDomain
     {
         public void Execute()

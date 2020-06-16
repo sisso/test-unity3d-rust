@@ -1,12 +1,11 @@
 ﻿using System.Runtime.InteropServices;
 using System;
 using System.Collections.Generic;
-using FlatBuffers;
 
 ///
 /// FFI implementation of local server
 /// 
-namespace Server.Ffi
+namespace Domain.Ffi
 {
     static class Native
     {
@@ -64,7 +63,7 @@ namespace Server.Ffi
             }
         }
 
-        public List<byte[]> GetArray()
+        public List<byte[]> Take()
         {
             List<byte[]> bytes = new List<byte[]>();
 
