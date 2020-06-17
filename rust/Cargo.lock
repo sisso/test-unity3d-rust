@@ -2,31 +2,29 @@
 # It is not intended for manual editing.
 [[package]]
 name = "flatbuffers"
-version = "0.6.0"
+version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a788f068dd10687940565bf4b5480ee943176cbd114b12e811074bcf7c04e4b9"
 dependencies = [
- "smallvec 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)",
+ "smallvec",
 ]
 
 [[package]]
 name = "libc"
-version = "0.2.62"
+version = "0.2.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9457b06509d27052635f90d6466700c65095fdf75409b3fbdd903e988b886f49"
 
 [[package]]
 name = "rustlib"
 version = "0.1.0"
 dependencies = [
- "flatbuffers 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "libc 0.2.62 (registry+https://github.com/rust-lang/crates.io-index)",
+ "flatbuffers",
+ "libc",
 ]
 
 [[package]]
 name = "smallvec"
-version = "0.6.10"
+version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[metadata]
-"checksum flatbuffers 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)" = "2fc1af59fd8248b59beb048d614a869ce211315c195f5412334e47f5b7e22726"
-"checksum libc 0.2.62 (registry+https://github.com/rust-lang/crates.io-index)" = "34fcd2c08d2f832f376f4173a231990fa5aef4e99fb569867318a227ef4c06ba"
-"checksum smallvec 0.6.10 (registry+https://github.com/rust-lang/crates.io-index)" = "ab606a9c5e214920bb66c458cd7be8ef094f813f20fe77a54cc7dbfff220d4b7"
+checksum = "c7cb5678e1615754284ec264d9bb5b4c27d2018577fd90ac0ceb578591ed5ee4"

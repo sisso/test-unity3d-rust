@@ -1,0 +1,30 @@
+enum PackageKind : byte {
+    Empty,
+    Simple,
+}
+
+enum MessageKind : ushort {
+	StartGame = 0,
+	CreateObj,
+	MoveObj,
+	SetInputAxis,
+}
+
+table EmptyPackage {
+   kind: MessageKind;
+}
+
+table SimplePackage {
+   kind: MessageKind;
+   id: uint32;
+   x: float32;
+   y: float32;
+}
+
+union GenericPackage { EmptyPackage, SimplePackage }
+
+table Package {
+    package: GenericPackage;
+}
+
+root_type Package;

@@ -1,1 +1,1 @@
-pub mod server_generated;
+pub mod packages_generated;
