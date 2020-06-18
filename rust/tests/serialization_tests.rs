@@ -12,18 +12,25 @@ fn test_flatbuffer_non_root_element() {
 }
 
 #[test]
-fn test_flatbuffer_schema_serialization() {
+fn test_flatbuffer_schema_v2_serialization() {
     let bytes = {
         let mut bd = FlatBufferBuilder::new();
+
+        let data = PosPackage::create(
+            &mut bd,
+            &PosPackageArgs {
+                id: 1,
+                x: 0.2,
+                y: 3.0,
+            },
+        );
 
         let package = Package::create(
             &mut bd,
             &PackageArgs {
                 kind: MessageKind::MoveObj,
-                id: Some(&IdPackage::new(1)),
-                pos: Some(&PosPackage::new(0.2, 3.0)),
-                str: None,
-                bytes: None,
+                data_type: DataPack::PosPackage,
+                data: Some(data.as_union_value()),
             },
         );
 
@@ -32,13 +39,16 @@ fn test_flatbuffer_schema_serialization() {
     };
 
     println!("{:?}", bytes);
-    assert_eq!(36, bytes.len());
+    assert_eq!(56, bytes.len());
 
     {
         let message = flatbuffers::get_root::<Package>(&bytes);
         assert_eq!(message.kind(), MessageKind::MoveObj);
-        assert_eq!(message.id().unwrap().id(), 1);
-        assert_eq!(message.pos().unwrap().x(), 0.2);
-        assert_eq!(message.pos().unwrap().y(), 3.0);
+        assert_eq!(message.data_type(), DataPack::PosPackage);
+
+        let data = message.data_as_pos_package().unwrap();
+        assert_eq!(data.id(), 1);
+        assert_eq!(data.x(), 0.2);
+        assert_eq!(data.y(), 3.0);
     }
 }

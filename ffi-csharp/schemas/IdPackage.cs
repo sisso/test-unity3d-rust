@@ -7,17 +7,28 @@ using global::FlatBuffers;
 
 public struct IdPackage : IFlatbufferObject
 {
-  private Struct __p;
+  private Table __p;
   public ByteBuffer ByteBuffer { get { return __p.bb; } }
-  public void __init(int _i, ByteBuffer _bb) { __p = new Struct(_i, _bb); }
+  public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_1_11_1(); }
+  public static IdPackage GetRootAsIdPackage(ByteBuffer _bb) { return GetRootAsIdPackage(_bb, new IdPackage()); }
+  public static IdPackage GetRootAsIdPackage(ByteBuffer _bb, IdPackage obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
   public IdPackage __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public uint Id { get { return __p.bb.GetUint(__p.bb_pos + 0); } }
+  public uint Id { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
 
-  public static Offset<IdPackage> CreateIdPackage(FlatBufferBuilder builder, uint Id) {
-    builder.Prep(4, 4);
-    builder.PutUint(Id);
-    return new Offset<IdPackage>(builder.Offset);
+  public static Offset<IdPackage> CreateIdPackage(FlatBufferBuilder builder,
+      uint id = 0) {
+    builder.StartTable(1);
+    IdPackage.AddId(builder, id);
+    return IdPackage.EndIdPackage(builder);
+  }
+
+  public static void StartIdPackage(FlatBufferBuilder builder) { builder.StartTable(1); }
+  public static void AddId(FlatBufferBuilder builder, uint id) { builder.AddUint(0, id, 0); }
+  public static Offset<IdPackage> EndIdPackage(FlatBufferBuilder builder) {
+    int o = builder.EndTable();
+    return new Offset<IdPackage>(o);
   }
 };
 

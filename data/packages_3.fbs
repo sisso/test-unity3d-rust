@@ -1,0 +1,49 @@
+enum MessageKind : ushort {
+	StartGame = 0,
+	CreateObj,
+	MoveObj,
+	SetInputAxis,
+}
+
+
+
+struct IdPackage {
+    id: uint32;
+}
+
+struct CreatePackage {
+   id: uint32;
+   x: float32;
+   y: float32;
+}
+
+struct PosPackage {
+   id: uint32;
+   x: float32;
+   y: float32;
+}
+
+struct V2Package {
+   x: float32;
+   y: float32;
+}
+
+table StringPackage {
+   buffer: string;
+}
+
+table BytesPackage {
+   buffer: [byte];
+}
+
+table Output {
+    start_game: IdPackage;
+    create_object: [CreatePackage];
+    move_obj: [PosPackage];
+}
+
+table Input {
+    axis: V2Package;
+}
+
+

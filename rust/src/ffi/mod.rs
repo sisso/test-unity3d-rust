@@ -4,34 +4,13 @@ use crate::game::{Game, Message, UserId};
 use crate::schemas::packages_generated::MessageKind;
 use ffi_utils::*;
 use flatbuffers::FlatBufferBuilder;
-use serde::{Deserialize, Serialize};
 
 pub type RawMsg = [u8];
 pub type RawMsgBuffer = Vec<u8>;
 
-#[derive(Serialize, Deserialize)]
-pub struct EmptyPackage {
-    kind: u16,
-}
-
-impl EmptyPackage {
-    pub fn new(kind: MessageKind) -> Self {
-        EmptyPackage { kind: kind as u16 }
-    }
-
-    pub fn get_kind(&self) -> MessageKind {
-        u16_to_kind(self.kind)
-    }
-}
-
-fn u16_to_kind(i: u16) -> MessageKind {
-    unimplemented!()
-}
-
 #[derive(Debug)]
 pub enum Error {
     Unknown(String),
-    Serde(serde::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -80,7 +59,7 @@ impl<'a> FfiContext {
         // let mut bd = FlatBufferBuilder::new();
         //
         match message {
-            Message::StartGame => bincode::serialize(EmptyPackage::new(MessageKind::StartGame)),
+            Message::StartGame => unimplemented!(),
             Message::CreateObj { id } => unimplemented!(),
             Message::MoveObj { obj_id, x, y } => unimplemented!(),
             Message::SetInputAxis { hor, ver } => unimplemented!(),
@@ -188,17 +167,5 @@ mod test {
         }
 
         Ok(())
-    }
-
-    #[test]
-    fn test_serialize_no_arguments() {
-        let empty = EmptyPackage::new(MessageKind::CreateObj);
-
-        let bytes = bincode::serialize(&empty).unwrap();
-        println!("{:?}", bytes);
-        assert_eq!(bytes.len(), 2);
-
-        let value = bincode::deserialize::<EmptyPackage>(&bytes).unwrap();
-        assert_eq!(value.kind, 1);
     }
 }

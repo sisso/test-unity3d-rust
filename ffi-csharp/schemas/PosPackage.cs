@@ -7,19 +7,36 @@ using global::FlatBuffers;
 
 public struct PosPackage : IFlatbufferObject
 {
-  private Struct __p;
+  private Table __p;
   public ByteBuffer ByteBuffer { get { return __p.bb; } }
-  public void __init(int _i, ByteBuffer _bb) { __p = new Struct(_i, _bb); }
+  public static void ValidateVersion() { FlatBufferConstants.FLATBUFFERS_1_11_1(); }
+  public static PosPackage GetRootAsPosPackage(ByteBuffer _bb) { return GetRootAsPosPackage(_bb, new PosPackage()); }
+  public static PosPackage GetRootAsPosPackage(ByteBuffer _bb, PosPackage obj) { return (obj.__assign(_bb.GetInt(_bb.Position) + _bb.Position, _bb)); }
+  public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
   public PosPackage __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public float X { get { return __p.bb.GetFloat(__p.bb_pos + 0); } }
-  public float Y { get { return __p.bb.GetFloat(__p.bb_pos + 4); } }
+  public uint Id { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public float X { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetFloat(o + __p.bb_pos) : (float)0.0f; } }
+  public float Y { get { int o = __p.__offset(8); return o != 0 ? __p.bb.GetFloat(o + __p.bb_pos) : (float)0.0f; } }
 
-  public static Offset<PosPackage> CreatePosPackage(FlatBufferBuilder builder, float X, float Y) {
-    builder.Prep(4, 8);
-    builder.PutFloat(Y);
-    builder.PutFloat(X);
-    return new Offset<PosPackage>(builder.Offset);
+  public static Offset<PosPackage> CreatePosPackage(FlatBufferBuilder builder,
+      uint id = 0,
+      float x = 0.0f,
+      float y = 0.0f) {
+    builder.StartTable(3);
+    PosPackage.AddY(builder, y);
+    PosPackage.AddX(builder, x);
+    PosPackage.AddId(builder, id);
+    return PosPackage.EndPosPackage(builder);
+  }
+
+  public static void StartPosPackage(FlatBufferBuilder builder) { builder.StartTable(3); }
+  public static void AddId(FlatBufferBuilder builder, uint id) { builder.AddUint(0, id, 0); }
+  public static void AddX(FlatBufferBuilder builder, float x) { builder.AddFloat(1, x, 0.0f); }
+  public static void AddY(FlatBufferBuilder builder, float y) { builder.AddFloat(2, y, 0.0f); }
+  public static Offset<PosPackage> EndPosPackage(FlatBufferBuilder builder) {
+    int o = builder.EndTable();
+    return new Offset<PosPackage>(o);
   }
 };
 

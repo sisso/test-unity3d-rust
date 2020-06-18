@@ -22,12 +22,3 @@ table StringPackage {
 table BytesPackage {
    buffer: [byte];
 }
-
-union DataPack { IdPackage, PosPackage, StringPackage, BytesPackage }
-
-table Package {
-   kind: MessageKind;
-   data: DataPack;
-}
-
-root_type Package;
