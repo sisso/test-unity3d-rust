@@ -1,8 +1,3 @@
-enum PackageKind : byte {
-    Empty,
-    Simple,
-}
-
 enum MessageKind : ushort {
 	StartGame = 0,
 	CreateObj,
@@ -10,21 +5,29 @@ enum MessageKind : ushort {
 	SetInputAxis,
 }
 
-table EmptyPackage {
-   kind: MessageKind;
+struct IdPackage {
+    id: uint32;
 }
 
-table SimplePackage {
-   kind: MessageKind;
-   id: uint32;
+struct PosPackage {
    x: float32;
    y: float32;
 }
 
-union GenericPackage { EmptyPackage, SimplePackage }
+table StringPackage {
+   buffer: string;
+}
+
+table BytesPackage {
+   buffer: [byte];
+}
 
 table Package {
-    package: GenericPackage;
+   kind: MessageKind;
+   id: IdPackage;
+   pos: PosPackage;
+   str: StringPackage;
+   bytes: BytesPackage;
 }
 
 root_type Package;

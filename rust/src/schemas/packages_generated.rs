@@ -9,66 +9,6 @@ extern crate flatbuffers;
 use self::flatbuffers::EndianScalar;
 
 #[allow(non_camel_case_types)]
-#[repr(i8)]
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub enum PackageKind {
-  Empty = 0,
-  Simple = 1,
-
-}
-
-const ENUM_MIN_PACKAGE_KIND: i8 = 0;
-const ENUM_MAX_PACKAGE_KIND: i8 = 1;
-
-impl<'a> flatbuffers::Follow<'a> for PackageKind {
-  type Inner = Self;
-  #[inline]
-  fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    flatbuffers::read_scalar_at::<Self>(buf, loc)
-  }
-}
-
-impl flatbuffers::EndianScalar for PackageKind {
-  #[inline]
-  fn to_little_endian(self) -> Self {
-    let n = i8::to_le(self as i8);
-    let p = &n as *const i8 as *const PackageKind;
-    unsafe { *p }
-  }
-  #[inline]
-  fn from_little_endian(self) -> Self {
-    let n = i8::from_le(self as i8);
-    let p = &n as *const i8 as *const PackageKind;
-    unsafe { *p }
-  }
-}
-
-impl flatbuffers::Push for PackageKind {
-    type Output = PackageKind;
-    #[inline]
-    fn push(&self, dst: &mut [u8], _rest: &[u8]) {
-        flatbuffers::emplace_scalar::<PackageKind>(dst, *self);
-    }
-}
-
-#[allow(non_camel_case_types)]
-const ENUM_VALUES_PACKAGE_KIND:[PackageKind; 2] = [
-  PackageKind::Empty,
-  PackageKind::Simple
-];
-
-#[allow(non_camel_case_types)]
-const ENUM_NAMES_PACKAGE_KIND:[&'static str; 2] = [
-    "Empty",
-    "Simple"
-];
-
-pub fn enum_name_package_kind(e: PackageKind) -> &'static str {
-  let index = e as i8;
-  ENUM_NAMES_PACKAGE_KIND[index as usize]
-}
-
-#[allow(non_camel_case_types)]
 #[repr(u16)]
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum MessageKind {
@@ -134,79 +74,132 @@ pub fn enum_name_message_kind(e: MessageKind) -> &'static str {
   ENUM_NAMES_MESSAGE_KIND[index as usize]
 }
 
-#[allow(non_camel_case_types)]
-#[repr(u8)]
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub enum GenericPackage {
-  NONE = 0,
-  EmptyPackage = 1,
-  SimplePackage = 2,
-
-}
-
-const ENUM_MIN_GENERIC_PACKAGE: u8 = 0;
-const ENUM_MAX_GENERIC_PACKAGE: u8 = 2;
-
-impl<'a> flatbuffers::Follow<'a> for GenericPackage {
-  type Inner = Self;
+// struct IdPackage, aligned to 4
+#[repr(C, align(4))]
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct IdPackage {
+  id_: u32,
+} // pub struct IdPackage
+impl flatbuffers::SafeSliceAccess for IdPackage {}
+impl<'a> flatbuffers::Follow<'a> for IdPackage {
+  type Inner = &'a IdPackage;
   #[inline]
   fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
-    flatbuffers::read_scalar_at::<Self>(buf, loc)
+    <&'a IdPackage>::follow(buf, loc)
   }
 }
-
-impl flatbuffers::EndianScalar for GenericPackage {
+impl<'a> flatbuffers::Follow<'a> for &'a IdPackage {
+  type Inner = &'a IdPackage;
   #[inline]
-  fn to_little_endian(self) -> Self {
-    let n = u8::to_le(self as u8);
-    let p = &n as *const u8 as *const GenericPackage;
-    unsafe { *p }
-  }
-  #[inline]
-  fn from_little_endian(self) -> Self {
-    let n = u8::from_le(self as u8);
-    let p = &n as *const u8 as *const GenericPackage;
-    unsafe { *p }
+  fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    flatbuffers::follow_cast_ref::<IdPackage>(buf, loc)
   }
 }
-
-impl flatbuffers::Push for GenericPackage {
-    type Output = GenericPackage;
+impl<'b> flatbuffers::Push for IdPackage {
+    type Output = IdPackage;
     #[inline]
     fn push(&self, dst: &mut [u8], _rest: &[u8]) {
-        flatbuffers::emplace_scalar::<GenericPackage>(dst, *self);
+        let src = unsafe {
+            ::std::slice::from_raw_parts(self as *const IdPackage as *const u8, Self::size())
+        };
+        dst.copy_from_slice(src);
+    }
+}
+impl<'b> flatbuffers::Push for &'b IdPackage {
+    type Output = IdPackage;
+
+    #[inline]
+    fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+        let src = unsafe {
+            ::std::slice::from_raw_parts(*self as *const IdPackage as *const u8, Self::size())
+        };
+        dst.copy_from_slice(src);
     }
 }
 
-#[allow(non_camel_case_types)]
-const ENUM_VALUES_GENERIC_PACKAGE:[GenericPackage; 3] = [
-  GenericPackage::NONE,
-  GenericPackage::EmptyPackage,
-  GenericPackage::SimplePackage
-];
 
-#[allow(non_camel_case_types)]
-const ENUM_NAMES_GENERIC_PACKAGE:[&'static str; 3] = [
-    "NONE",
-    "EmptyPackage",
-    "SimplePackage"
-];
+impl IdPackage {
+  pub fn new<'a>(_id: u32) -> Self {
+    IdPackage {
+      id_: _id.to_little_endian(),
 
-pub fn enum_name_generic_package(e: GenericPackage) -> &'static str {
-  let index = e as u8;
-  ENUM_NAMES_GENERIC_PACKAGE[index as usize]
+    }
+  }
+  pub fn id<'a>(&'a self) -> u32 {
+    self.id_.from_little_endian()
+  }
 }
 
-pub struct GenericPackageUnionTableOffset {}
-pub enum EmptyPackageOffset {}
+// struct PosPackage, aligned to 4
+#[repr(C, align(4))]
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct PosPackage {
+  x_: f32,
+  y_: f32,
+} // pub struct PosPackage
+impl flatbuffers::SafeSliceAccess for PosPackage {}
+impl<'a> flatbuffers::Follow<'a> for PosPackage {
+  type Inner = &'a PosPackage;
+  #[inline]
+  fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    <&'a PosPackage>::follow(buf, loc)
+  }
+}
+impl<'a> flatbuffers::Follow<'a> for &'a PosPackage {
+  type Inner = &'a PosPackage;
+  #[inline]
+  fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
+    flatbuffers::follow_cast_ref::<PosPackage>(buf, loc)
+  }
+}
+impl<'b> flatbuffers::Push for PosPackage {
+    type Output = PosPackage;
+    #[inline]
+    fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+        let src = unsafe {
+            ::std::slice::from_raw_parts(self as *const PosPackage as *const u8, Self::size())
+        };
+        dst.copy_from_slice(src);
+    }
+}
+impl<'b> flatbuffers::Push for &'b PosPackage {
+    type Output = PosPackage;
+
+    #[inline]
+    fn push(&self, dst: &mut [u8], _rest: &[u8]) {
+        let src = unsafe {
+            ::std::slice::from_raw_parts(*self as *const PosPackage as *const u8, Self::size())
+        };
+        dst.copy_from_slice(src);
+    }
+}
+
+
+impl PosPackage {
+  pub fn new<'a>(_x: f32, _y: f32) -> Self {
+    PosPackage {
+      x_: _x.to_little_endian(),
+      y_: _y.to_little_endian(),
+
+    }
+  }
+  pub fn x<'a>(&'a self) -> f32 {
+    self.x_.from_little_endian()
+  }
+  pub fn y<'a>(&'a self) -> f32 {
+    self.y_.from_little_endian()
+  }
+}
+
+pub enum StringPackageOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
-pub struct EmptyPackage<'a> {
+pub struct StringPackage<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for EmptyPackage<'a> {
-    type Inner = EmptyPackage<'a>;
+impl<'a> flatbuffers::Follow<'a> for StringPackage<'a> {
+    type Inner = StringPackage<'a>;
     #[inline]
     fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -215,74 +208,74 @@ impl<'a> flatbuffers::Follow<'a> for EmptyPackage<'a> {
     }
 }
 
-impl<'a> EmptyPackage<'a> {
+impl<'a> StringPackage<'a> {
     #[inline]
     pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        EmptyPackage {
+        StringPackage {
             _tab: table,
         }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args EmptyPackageArgs) -> flatbuffers::WIPOffset<EmptyPackage<'bldr>> {
-      let mut builder = EmptyPackageBuilder::new(_fbb);
-      builder.add_kind(args.kind);
+        args: &'args StringPackageArgs<'args>) -> flatbuffers::WIPOffset<StringPackage<'bldr>> {
+      let mut builder = StringPackageBuilder::new(_fbb);
+      if let Some(x) = args.buffer { builder.add_buffer(x); }
       builder.finish()
     }
 
-    pub const VT_KIND: flatbuffers::VOffsetT = 4;
+    pub const VT_BUFFER: flatbuffers::VOffsetT = 4;
 
   #[inline]
-  pub fn kind(&self) -> MessageKind {
-    self._tab.get::<MessageKind>(EmptyPackage::VT_KIND, Some(MessageKind::StartGame)).unwrap()
+  pub fn buffer(&self) -> Option<&'a str> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(StringPackage::VT_BUFFER, None)
   }
 }
 
-pub struct EmptyPackageArgs {
-    pub kind: MessageKind,
+pub struct StringPackageArgs<'a> {
+    pub buffer: Option<flatbuffers::WIPOffset<&'a  str>>,
 }
-impl<'a> Default for EmptyPackageArgs {
+impl<'a> Default for StringPackageArgs<'a> {
     #[inline]
     fn default() -> Self {
-        EmptyPackageArgs {
-            kind: MessageKind::StartGame,
+        StringPackageArgs {
+            buffer: None,
         }
     }
 }
-pub struct EmptyPackageBuilder<'a: 'b, 'b> {
+pub struct StringPackageBuilder<'a: 'b, 'b> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> EmptyPackageBuilder<'a, 'b> {
+impl<'a: 'b, 'b> StringPackageBuilder<'a, 'b> {
   #[inline]
-  pub fn add_kind(&mut self, kind: MessageKind) {
-    self.fbb_.push_slot::<MessageKind>(EmptyPackage::VT_KIND, kind, MessageKind::StartGame);
+  pub fn add_buffer(&mut self, buffer: flatbuffers::WIPOffset<&'b  str>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StringPackage::VT_BUFFER, buffer);
   }
   #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> EmptyPackageBuilder<'a, 'b> {
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> StringPackageBuilder<'a, 'b> {
     let start = _fbb.start_table();
-    EmptyPackageBuilder {
+    StringPackageBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<EmptyPackage<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<StringPackage<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
 }
 
-pub enum SimplePackageOffset {}
+pub enum BytesPackageOffset {}
 #[derive(Copy, Clone, Debug, PartialEq)]
 
-pub struct SimplePackage<'a> {
+pub struct BytesPackage<'a> {
   pub _tab: flatbuffers::Table<'a>,
 }
 
-impl<'a> flatbuffers::Follow<'a> for SimplePackage<'a> {
-    type Inner = SimplePackage<'a>;
+impl<'a> flatbuffers::Follow<'a> for BytesPackage<'a> {
+    type Inner = BytesPackage<'a>;
     #[inline]
     fn follow(buf: &'a [u8], loc: usize) -> Self::Inner {
         Self {
@@ -291,96 +284,60 @@ impl<'a> flatbuffers::Follow<'a> for SimplePackage<'a> {
     }
 }
 
-impl<'a> SimplePackage<'a> {
+impl<'a> BytesPackage<'a> {
     #[inline]
     pub fn init_from_table(table: flatbuffers::Table<'a>) -> Self {
-        SimplePackage {
+        BytesPackage {
             _tab: table,
         }
     }
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args SimplePackageArgs) -> flatbuffers::WIPOffset<SimplePackage<'bldr>> {
-      let mut builder = SimplePackageBuilder::new(_fbb);
-      builder.add_y(args.y);
-      builder.add_x(args.x);
-      builder.add_id(args.id);
-      builder.add_kind(args.kind);
+        args: &'args BytesPackageArgs<'args>) -> flatbuffers::WIPOffset<BytesPackage<'bldr>> {
+      let mut builder = BytesPackageBuilder::new(_fbb);
+      if let Some(x) = args.buffer { builder.add_buffer(x); }
       builder.finish()
     }
 
-    pub const VT_KIND: flatbuffers::VOffsetT = 4;
-    pub const VT_ID: flatbuffers::VOffsetT = 6;
-    pub const VT_X: flatbuffers::VOffsetT = 8;
-    pub const VT_Y: flatbuffers::VOffsetT = 10;
+    pub const VT_BUFFER: flatbuffers::VOffsetT = 4;
 
   #[inline]
-  pub fn kind(&self) -> MessageKind {
-    self._tab.get::<MessageKind>(SimplePackage::VT_KIND, Some(MessageKind::StartGame)).unwrap()
-  }
-  #[inline]
-  pub fn id(&self) -> u32 {
-    self._tab.get::<u32>(SimplePackage::VT_ID, Some(0)).unwrap()
-  }
-  #[inline]
-  pub fn x(&self) -> f32 {
-    self._tab.get::<f32>(SimplePackage::VT_X, Some(0.0)).unwrap()
-  }
-  #[inline]
-  pub fn y(&self) -> f32 {
-    self._tab.get::<f32>(SimplePackage::VT_Y, Some(0.0)).unwrap()
+  pub fn buffer(&self) -> Option<&'a [i8]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, i8>>>(BytesPackage::VT_BUFFER, None).map(|v| v.safe_slice())
   }
 }
 
-pub struct SimplePackageArgs {
-    pub kind: MessageKind,
-    pub id: u32,
-    pub x: f32,
-    pub y: f32,
+pub struct BytesPackageArgs<'a> {
+    pub buffer: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  i8>>>,
 }
-impl<'a> Default for SimplePackageArgs {
+impl<'a> Default for BytesPackageArgs<'a> {
     #[inline]
     fn default() -> Self {
-        SimplePackageArgs {
-            kind: MessageKind::StartGame,
-            id: 0,
-            x: 0.0,
-            y: 0.0,
+        BytesPackageArgs {
+            buffer: None,
         }
     }
 }
-pub struct SimplePackageBuilder<'a: 'b, 'b> {
+pub struct BytesPackageBuilder<'a: 'b, 'b> {
   fbb_: &'b mut flatbuffers::FlatBufferBuilder<'a>,
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
-impl<'a: 'b, 'b> SimplePackageBuilder<'a, 'b> {
+impl<'a: 'b, 'b> BytesPackageBuilder<'a, 'b> {
   #[inline]
-  pub fn add_kind(&mut self, kind: MessageKind) {
-    self.fbb_.push_slot::<MessageKind>(SimplePackage::VT_KIND, kind, MessageKind::StartGame);
+  pub fn add_buffer(&mut self, buffer: flatbuffers::WIPOffset<flatbuffers::Vector<'b , i8>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(BytesPackage::VT_BUFFER, buffer);
   }
   #[inline]
-  pub fn add_id(&mut self, id: u32) {
-    self.fbb_.push_slot::<u32>(SimplePackage::VT_ID, id, 0);
-  }
-  #[inline]
-  pub fn add_x(&mut self, x: f32) {
-    self.fbb_.push_slot::<f32>(SimplePackage::VT_X, x, 0.0);
-  }
-  #[inline]
-  pub fn add_y(&mut self, y: f32) {
-    self.fbb_.push_slot::<f32>(SimplePackage::VT_Y, y, 0.0);
-  }
-  #[inline]
-  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> SimplePackageBuilder<'a, 'b> {
+  pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> BytesPackageBuilder<'a, 'b> {
     let start = _fbb.start_table();
-    SimplePackageBuilder {
+    BytesPackageBuilder {
       fbb_: _fbb,
       start_: start,
     }
   }
   #[inline]
-  pub fn finish(self) -> flatbuffers::WIPOffset<SimplePackage<'a>> {
+  pub fn finish(self) -> flatbuffers::WIPOffset<BytesPackage<'a>> {
     let o = self.fbb_.end_table(self.start_);
     flatbuffers::WIPOffset::new(o.value())
   }
@@ -413,56 +370,60 @@ impl<'a> Package<'a> {
     #[allow(unused_mut)]
     pub fn create<'bldr: 'args, 'args: 'mut_bldr, 'mut_bldr>(
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
-        args: &'args PackageArgs) -> flatbuffers::WIPOffset<Package<'bldr>> {
+        args: &'args PackageArgs<'args>) -> flatbuffers::WIPOffset<Package<'bldr>> {
       let mut builder = PackageBuilder::new(_fbb);
-      if let Some(x) = args.package { builder.add_package(x); }
-      builder.add_package_type(args.package_type);
+      if let Some(x) = args.bytes { builder.add_bytes(x); }
+      if let Some(x) = args.str { builder.add_str(x); }
+      if let Some(x) = args.pos { builder.add_pos(x); }
+      if let Some(x) = args.id { builder.add_id(x); }
+      builder.add_kind(args.kind);
       builder.finish()
     }
 
-    pub const VT_PACKAGE_TYPE: flatbuffers::VOffsetT = 4;
-    pub const VT_PACKAGE: flatbuffers::VOffsetT = 6;
+    pub const VT_KIND: flatbuffers::VOffsetT = 4;
+    pub const VT_ID: flatbuffers::VOffsetT = 6;
+    pub const VT_POS: flatbuffers::VOffsetT = 8;
+    pub const VT_STR: flatbuffers::VOffsetT = 10;
+    pub const VT_BYTES: flatbuffers::VOffsetT = 12;
 
   #[inline]
-  pub fn package_type(&self) -> GenericPackage {
-    self._tab.get::<GenericPackage>(Package::VT_PACKAGE_TYPE, Some(GenericPackage::NONE)).unwrap()
+  pub fn kind(&self) -> MessageKind {
+    self._tab.get::<MessageKind>(Package::VT_KIND, Some(MessageKind::StartGame)).unwrap()
   }
   #[inline]
-  pub fn package(&self) -> Option<flatbuffers::Table<'a>> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Table<'a>>>(Package::VT_PACKAGE, None)
+  pub fn id(&self) -> Option<&'a IdPackage> {
+    self._tab.get::<IdPackage>(Package::VT_ID, None)
   }
   #[inline]
-  #[allow(non_snake_case)]
-  pub fn package_as_empty_package(&self) -> Option<EmptyPackage<'a>> {
-    if self.package_type() == GenericPackage::EmptyPackage {
-      self.package().map(|u| EmptyPackage::init_from_table(u))
-    } else {
-      None
-    }
+  pub fn pos(&self) -> Option<&'a PosPackage> {
+    self._tab.get::<PosPackage>(Package::VT_POS, None)
   }
-
   #[inline]
-  #[allow(non_snake_case)]
-  pub fn package_as_simple_package(&self) -> Option<SimplePackage<'a>> {
-    if self.package_type() == GenericPackage::SimplePackage {
-      self.package().map(|u| SimplePackage::init_from_table(u))
-    } else {
-      None
-    }
+  pub fn str(&self) -> Option<StringPackage<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<StringPackage<'a>>>(Package::VT_STR, None)
   }
-
+  #[inline]
+  pub fn bytes(&self) -> Option<BytesPackage<'a>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<BytesPackage<'a>>>(Package::VT_BYTES, None)
+  }
 }
 
-pub struct PackageArgs {
-    pub package_type: GenericPackage,
-    pub package: Option<flatbuffers::WIPOffset<flatbuffers::UnionWIPOffset>>,
+pub struct PackageArgs<'a> {
+    pub kind: MessageKind,
+    pub id: Option<&'a  IdPackage>,
+    pub pos: Option<&'a  PosPackage>,
+    pub str: Option<flatbuffers::WIPOffset<StringPackage<'a >>>,
+    pub bytes: Option<flatbuffers::WIPOffset<BytesPackage<'a >>>,
 }
-impl<'a> Default for PackageArgs {
+impl<'a> Default for PackageArgs<'a> {
     #[inline]
     fn default() -> Self {
         PackageArgs {
-            package_type: GenericPackage::NONE,
-            package: None,
+            kind: MessageKind::StartGame,
+            id: None,
+            pos: None,
+            str: None,
+            bytes: None,
         }
     }
 }
@@ -472,12 +433,24 @@ pub struct PackageBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> PackageBuilder<'a, 'b> {
   #[inline]
-  pub fn add_package_type(&mut self, package_type: GenericPackage) {
-    self.fbb_.push_slot::<GenericPackage>(Package::VT_PACKAGE_TYPE, package_type, GenericPackage::NONE);
+  pub fn add_kind(&mut self, kind: MessageKind) {
+    self.fbb_.push_slot::<MessageKind>(Package::VT_KIND, kind, MessageKind::StartGame);
   }
   #[inline]
-  pub fn add_package(&mut self, package: flatbuffers::WIPOffset<flatbuffers::UnionWIPOffset>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Package::VT_PACKAGE, package);
+  pub fn add_id(&mut self, id: &'b  IdPackage) {
+    self.fbb_.push_slot_always::<&IdPackage>(Package::VT_ID, id);
+  }
+  #[inline]
+  pub fn add_pos(&mut self, pos: &'b  PosPackage) {
+    self.fbb_.push_slot_always::<&PosPackage>(Package::VT_POS, pos);
+  }
+  #[inline]
+  pub fn add_str(&mut self, str: flatbuffers::WIPOffset<StringPackage<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<StringPackage>>(Package::VT_STR, str);
+  }
+  #[inline]
+  pub fn add_bytes(&mut self, bytes: flatbuffers::WIPOffset<BytesPackage<'b >>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<BytesPackage>>(Package::VT_BYTES, bytes);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> PackageBuilder<'a, 'b> {

@@ -1,19 +1,37 @@
 mod ffi_utils;
 
 use crate::game::{Game, Message, UserId};
-use crate::schemas::packages_generated::{EmptyPackage, MessageKind, SimplePackage};
-///
-/// Map FFI functions to game logic
-///
+use crate::schemas::packages_generated::MessageKind;
 use ffi_utils::*;
 use flatbuffers::FlatBufferBuilder;
+use serde::{Deserialize, Serialize};
 
 pub type RawMsg = [u8];
 pub type RawMsgBuffer = Vec<u8>;
 
+#[derive(Serialize, Deserialize)]
+pub struct EmptyPackage {
+    kind: u16,
+}
+
+impl EmptyPackage {
+    pub fn new(kind: MessageKind) -> Self {
+        EmptyPackage { kind: kind as u16 }
+    }
+
+    pub fn get_kind(&self) -> MessageKind {
+        u16_to_kind(self.kind)
+    }
+}
+
+fn u16_to_kind(i: u16) -> MessageKind {
+    unimplemented!()
+}
+
 #[derive(Debug)]
 pub enum Error {
     Unknown(String),
+    Serde(serde::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -61,32 +79,18 @@ impl<'a> FfiContext {
     fn serialize_event(message: Message) -> Result<RawMsgBuffer> {
         // let mut bd = FlatBufferBuilder::new();
         //
-        // match message {
-        //     Message::StartGame => {
-        //         package_args.kind = PackageKind::StartGame;
-        //     }
-        //     Message::CreateObj { id } => {
-        //         package_args.kind = PackageKind::CreateObj;
-        //         package_args.id = id;
-        //     }
-        //     Message::MoveObj { obj_id, x, y } => {
-        //         package_args.kind = PackageKind::MoveObj;
-        //         package_args.x = x;
-        //         package_args.y = y;
-        //     }
-        //     Message::SetInputAxis { hor, ver } => {
-        //         package_args.kind = PackageKind::SetInputAxis;
-        //         package_args.x = hor;
-        //         package_args.y = ver;
-        //     }
-        // }
+        match message {
+            Message::StartGame => bincode::serialize(EmptyPackage::new(MessageKind::StartGame)),
+            Message::CreateObj { id } => unimplemented!(),
+            Message::MoveObj { obj_id, x, y } => unimplemented!(),
+            Message::SetInputAxis { hor, ver } => unimplemented!(),
+        }
         //
         // let package = Package::create(&mut bd, &package_args);
         // bd.finish_minimal(package);
         //
         // let bytes = bd.finished_data().to_vec();
         // Ok(bytes)
-        unimplemented!()
     }
 
     fn parse_event(bytes: &RawMsg) -> Result<Message> {
@@ -149,19 +153,32 @@ mod test {
     use super::*;
     use crate::game::Message;
 
+    fn serialize_and_parse(message: Message) -> Result<Message> {
+        let bytes = FfiContext::serialize_event(message)?;
+        FfiContext::parse_event(bytes.as_slice())
+    }
+
     #[test]
-    fn test_serialize_and_parse_package() -> Result<()> {
-        let message = Message::MoveObj {
+    fn serialize_start_game() -> Result<()> {
+        let msg = serialize_and_parse(Message::StartGame)?;
+
+        match msg {
+            Message::StartGame => {}
+            other => panic!("unexpected {:?}", other),
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_move_obj() -> Result<()> {
+        let msg = serialize_and_parse(Message::MoveObj {
             obj_id: 1,
             x: 0.2,
             y: 3.0,
-        };
+        })?;
 
-        let bytes = FfiContext::serialize_event(message)?;
-
-        let message_2 = FfiContext::parse_event(bytes.as_slice())?;
-
-        match message_2 {
+        match msg {
             Message::MoveObj { obj_id, x, y } => {
                 assert_eq!(obj_id, 1);
                 assert_eq!(x, 0.2);
@@ -171,5 +188,17 @@ mod test {
         }
 
         Ok(())
+    }
+
+    #[test]
+    fn test_serialize_no_arguments() {
+        let empty = EmptyPackage::new(MessageKind::CreateObj);
+
+        let bytes = bincode::serialize(&empty).unwrap();
+        println!("{:?}", bytes);
+        assert_eq!(bytes.len(), 2);
+
+        let value = bincode::deserialize::<EmptyPackage>(&bytes).unwrap();
+        assert_eq!(value.kind, 1);
     }
 }

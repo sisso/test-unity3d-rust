@@ -5,6 +5,6 @@
 public enum PackageKind : sbyte
 {
   Empty = 0,
-  Simple = 1,
+  Package = 1,
 };
 

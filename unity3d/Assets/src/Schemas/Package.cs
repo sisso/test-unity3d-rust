@@ -15,21 +15,18 @@ public struct Package : IFlatbufferObject
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
   public Package __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public GenericPackage PackageType { get { int o = __p.__offset(4); return o != 0 ? (GenericPackage)__p.bb.Get(o + __p.bb_pos) : GenericPackage.NONE; } }
-  public TTable? Package<TTable>() where TTable : struct, IFlatbufferObject { int o = __p.__offset(6); return o != 0 ? (TTable?)__p.__union<TTable>(o + __p.bb_pos) : null; }
+  public MessageKind Kind { get { int o = __p.__offset(4); return o != 0 ? (MessageKind)__p.bb.GetUshort(o + __p.bb_pos) : MessageKind.StartGame; } }
+  public IdPackage? Id { get { int o = __p.__offset(6); return o != 0 ? (IdPackage?)(new IdPackage()).__assign(o + __p.bb_pos, __p.bb) : null; } }
+  public PosPackage? Pos { get { int o = __p.__offset(8); return o != 0 ? (PosPackage?)(new PosPackage()).__assign(o + __p.bb_pos, __p.bb) : null; } }
+  public StringPackage? Str { get { int o = __p.__offset(10); return o != 0 ? (StringPackage?)(new StringPackage()).__assign(__p.__indirect(o + __p.bb_pos), __p.bb) : null; } }
+  public BytesPackage? Bytes { get { int o = __p.__offset(12); return o != 0 ? (BytesPackage?)(new BytesPackage()).__assign(__p.__indirect(o + __p.bb_pos), __p.bb) : null; } }
 
-  public static Offset<Package> CreatePackage(FlatBufferBuilder builder,
-      GenericPackage package_type = GenericPackage.NONE,
-      int packageOffset = 0) {
-    builder.StartTable(2);
-    Package.AddPackage(builder, packageOffset);
-    Package.AddPackageType(builder, package_type);
-    return Package.EndPackage(builder);
-  }
-
-  public static void StartPackage(FlatBufferBuilder builder) { builder.StartTable(2); }
-  public static void AddPackageType(FlatBufferBuilder builder, GenericPackage packageType) { builder.AddByte(0, (byte)packageType, 0); }
-  public static void AddPackage(FlatBufferBuilder builder, int packageOffset) { builder.AddOffset(1, packageOffset, 0); }
+  public static void StartPackage(FlatBufferBuilder builder) { builder.StartTable(5); }
+  public static void AddKind(FlatBufferBuilder builder, MessageKind kind) { builder.AddUshort(0, (ushort)kind, 0); }
+  public static void AddId(FlatBufferBuilder builder, Offset<IdPackage> idOffset) { builder.AddStruct(1, idOffset.Value, 0); }
+  public static void AddPos(FlatBufferBuilder builder, Offset<PosPackage> posOffset) { builder.AddStruct(2, posOffset.Value, 0); }
+  public static void AddStr(FlatBufferBuilder builder, Offset<StringPackage> strOffset) { builder.AddOffset(3, strOffset.Value, 0); }
+  public static void AddBytes(FlatBufferBuilder builder, Offset<BytesPackage> bytesOffset) { builder.AddOffset(4, bytesOffset.Value, 0); }
   public static Offset<Package> EndPackage(FlatBufferBuilder builder) {
     int o = builder.EndTable();
     return new Offset<Package>(o);
