@@ -35,6 +35,11 @@ impl<'a> FfiContext {
 
     // TODO: receive a closure?
     fn take(&mut self) -> Result<RawMsgBuffer> {
+        let game_responses = self.game.take();
+        FfiContext::serialize_game_responses(game_responses)
+    }
+
+    pub fn serialize_game_responses(game_responses: Vec<Responses>) -> Result<RawMsgBuffer> {
         // TODO move buffer to context for reuse
         let mut fb = FlatBufferBuilder::new();
 
@@ -43,8 +48,7 @@ impl<'a> FfiContext {
                 if $field.is_empty() {
                     None
                 } else {
-                    let v = std::mem::replace(&mut $field, vec![]);
-                    Some(fb.create_vector(v.as_ref()))
+                    Some(fb.create_vector($field.as_ref()))
                 }
             };
         }
@@ -53,7 +57,7 @@ impl<'a> FfiContext {
         let mut create_objects = vec![];
         let mut move_objects = vec![];
 
-        for responses in self.game.take() {
+        for responses in game_responses {
             match responses {
                 Responses::CreateObj { id, x, y } => {
                     create_objects.push(ffi_responses::CreatePackage::new(
@@ -76,7 +80,8 @@ impl<'a> FfiContext {
             move_obj: create_vector!(move_objects),
         };
 
-        ffi_responses::Responses::create(&mut fb, &args);
+        let out = ffi_responses::Responses::create(&mut fb, &args);
+        fb.finish_minimal(out);
 
         // TODO remove this copy
         Ok(fb.finished_data().to_vec())

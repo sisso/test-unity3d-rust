@@ -306,7 +306,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1601594594}
   - component: {fileID: 1601594593}
-  - component: {fileID: 1601594595}
   m_Layer: 0
   m_Name: GameController
   m_TagString: Untagged
@@ -328,8 +327,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mode: 1
   remoteAddress: 
-  fakePrefab: {fileID: 0}
-  ffiPrefab: {fileID: 1601594595}
+  fakePrefab: {fileID: 113247792929656686, guid: 701d429de559e6094b6735f0c2a70c60,
+    type: 3}
+  ffiPrefab: {fileID: -468388171331587573, guid: b83ad3336b1d4ae11b7760c346b59d50,
+    type: 3}
   playerPrefab: {fileID: 4798178499479870591, guid: 68a713745f0af99d9a03d40ffaf5982b,
     type: 3}
 --- !u!4 &1601594594
@@ -346,15 +347,3 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1601594595
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1601594592}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 63fd21f36c0d46b995c8f22d239fd602, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 

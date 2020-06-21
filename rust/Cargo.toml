@@ -6,9 +6,10 @@ edition = "2018"
 
 # need to be commented to run example or tests :/
 [lib]
-name="ffi_server"
+name="ffi_domain"
 crate-type = ["bin", "lib", "cdylib"]
 
 [dependencies]
 libc = "0.2.*"
 flatbuffers = "0.6.*"
+base64 = "0.12.*"

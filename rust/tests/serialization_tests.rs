@@ -1,7 +1,9 @@
-extern crate ffi_server;
+extern crate ffi_domain;
 extern crate flatbuffers;
 
-use ffi_server::schemas::ffi_responses::*;
+use ffi_domain::ffi::FfiContext;
+use ffi_domain::game::Game;
+use ffi_domain::schemas::ffi_responses::*;
 use flatbuffers::FlatBufferBuilder;
 
 #[test]
@@ -12,7 +14,7 @@ fn test_flatbuffer_non_root_element() {
 }
 
 #[test]
-fn test_flatbuffer_schema_v2_serialization() {
+fn test_flatbuffer_schema_serialization() {
     let bytes = {
         let mut bd = FlatBufferBuilder::new();
 

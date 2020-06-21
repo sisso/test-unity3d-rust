@@ -29,11 +29,13 @@ pub enum Requests {
 }
 
 #[derive(Debug)]
-pub struct Game {}
+pub struct Game {
+    state: u32,
+}
 
 impl Game {
     pub fn new() -> Self {
-        Game {}
+        Game { state: 0 }
     }
 
     pub fn connect(&mut self) -> UserId {
@@ -41,6 +43,24 @@ impl Game {
     }
 
     pub fn take(&mut self) -> Vec<Responses> {
-        Vec::new()
+        let mut result = vec![];
+
+        self.state += 1;
+
+        if (self.state == 50) {
+            result.push(Responses::CreateObj {
+                id: 0,
+                x: 0.0,
+                y: 0.0,
+            })
+        } else if (self.state > 50) {
+            result.push(Responses::MoveObj {
+                obj_id: 0,
+                x: (self.state as f32 - 50.0) / 100.0,
+                y: 0.0,
+            });
+        }
+
+        result
     }
 }

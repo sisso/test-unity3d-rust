@@ -6,13 +6,13 @@ namespace Domain.Ffi
 {
     static class Native
     {
-        [DllImport("ffi_server.so", CharSet = CharSet.Unicode)]
+        [DllImport("ffi_domain.so", CharSet = CharSet.Unicode)]
         internal static extern ContextHandler server_ffi_context_create();
-        [DllImport("ffi_server.so", CharSet = CharSet.Unicode)]
+        [DllImport("ffi_domain.so", CharSet = CharSet.Unicode)]
         internal static extern void server_ffi_context_close(IntPtr ptr);
-        [DllImport("ffi_server.so")]
+        [DllImport("ffi_domain.so")]
         internal static extern bool server_ffi_push(ContextHandler ptr, byte[] buffer, UInt32 len);
-        [DllImport("ffi_server.so", CharSet = CharSet.Unicode)]
+        [DllImport("ffi_domain.so", CharSet = CharSet.Unicode)]
         internal static extern bool server_ffi_take(ContextHandler ptr, Action<IntPtr, UInt32> callback);
     }
 
