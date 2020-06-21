@@ -3,25 +3,32 @@ using UnityEngine;
 
 namespace Domain
 {
-    public interface IEvent
+    /// <summary>
+    /// Messages send to the game
+    /// </summary>
+    public interface IRequest {}
+
+    /// <summary>
+    /// Messages received from the game
+    /// </summary>
+    public interface IResponse
     {
     }
 
-    public class EventLoadScene : IEvent
+    public class ResponseStartGame: IResponse
     {
-        public string sceneName;
     }
 
-    public class EventSpawn : IEvent
+    public class ResponseSpawn : IResponse
     {
-        public int id;
-        public string prefab;
+        public uint id;
+        public responses.PrefabKind prefab;
         public Vector3 position;
     }
 
-    public class EventPos : IEvent
+    public class ResponsePos : IResponse
     {
-        public int id;
+        public uint id;
         public Vector3 position;
     }
     
@@ -31,7 +38,6 @@ namespace Domain
     /// </summary>
     public interface IDomain
     {
-        void Execute();
-        List<IEvent> TakeEvents();
+        List<IResponse> Execute();
     }
 }

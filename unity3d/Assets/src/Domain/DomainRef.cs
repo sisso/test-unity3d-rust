@@ -4,6 +4,6 @@ namespace Server
 {
     public class DomainRef : MonoBehaviour
     {
-        public int id;
+        public uint id;
     }
 }

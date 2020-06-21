@@ -2,9 +2,6 @@
 using System;
 using System.Collections.Generic;
 
-///
-/// FFI implementation of local server
-/// 
 namespace Domain.Ffi
 {
     static class Native
@@ -40,6 +37,9 @@ namespace Domain.Ffi
         }
     }
 
+    ///
+    /// FFI connector
+    /// 
     public class Context : IDisposable
     {
         private ContextHandler handler;
@@ -63,23 +63,20 @@ namespace Domain.Ffi
             }
         }
 
-        public List<byte[]> Take()
+        public void Execute(Action<byte[]> caller)
         {
-            List<byte[]> bytes = new List<byte[]>();
-
             var result = Native.server_ffi_take(this.handler, (ptr, length) =>
             {
-                bytes.Add(ToByteArray(ptr, length));
+                caller.Invoke(ToByteArray(ptr, length));
             });
 
             if (!result)
             {
                 throw new Exception($"Fail to take");
             }
-            
-            return bytes;
         }
 
+        // TODO: remove copy 
         private static byte[] ToByteArray(IntPtr ptr, uint length)
         {
             int len = Convert.ToInt32(length);

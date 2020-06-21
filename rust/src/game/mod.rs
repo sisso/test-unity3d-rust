@@ -18,10 +18,14 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub type ObjId = u32;
 
 #[derive(Debug, Clone)]
-pub enum Message {
+pub enum Responses {
     StartGame,
-    CreateObj { id: ObjId },
+    CreateObj { id: ObjId, x: f32, y: f32 },
     MoveObj { obj_id: ObjId, x: f32, y: f32 },
+}
+
+#[derive(Debug, Clone)]
+pub enum Requests {
     SetInputAxis { hor: f32, ver: f32 },
 }
 
@@ -37,7 +41,7 @@ impl Game {
         0
     }
 
-    pub fn take(&mut self, user_id: UserId) -> Vec<Message> {
+    pub fn take(&mut self) -> Vec<Responses> {
         Vec::new()
     }
 }

@@ -1,14 +1,14 @@
 extern crate ffi_server;
 extern crate flatbuffers;
 
-use ffi_server::schemas::packages_generated::*;
+use ffi_server::schemas::responses::*;
 use flatbuffers::FlatBufferBuilder;
 
 #[test]
 fn test_flatbuffer_non_root_element() {
     let bytes: [u8; 2] = [1, 0];
-    let kind = flatbuffers::follow_cast_ref::<MessageKind>(&bytes, 0);
-    assert_eq!(*kind, MessageKind::CreateObj);
+    let kind = flatbuffers::follow_cast_ref::<ResponseKind>(&bytes, 0);
+    assert_eq!(*kind, ResponseKind::CreateObj);
 }
 
 #[test]
@@ -16,21 +16,14 @@ fn test_flatbuffer_schema_v2_serialization() {
     let bytes = {
         let mut bd = FlatBufferBuilder::new();
 
-        let data = PosPackage::create(
-            &mut bd,
-            &PosPackageArgs {
-                id: 1,
-                x: 0.2,
-                y: 3.0,
-            },
-        );
+        let v = bd.create_vector(&[PosPackage::new(1, 0.2, 3.0)]);
 
-        let package = Package::create(
+        let package = Responses::create(
             &mut bd,
-            &PackageArgs {
-                kind: MessageKind::MoveObj,
-                data_type: DataPack::PosPackage,
-                data: Some(data.as_union_value()),
+            &ResponsesArgs {
+                simple: None,
+                create_object: None,
+                move_obj: Some(v),
             },
         );
 
@@ -39,16 +32,13 @@ fn test_flatbuffer_schema_v2_serialization() {
     };
 
     println!("{:?}", bytes);
-    assert_eq!(56, bytes.len());
+    assert_eq!(bytes.len(), 40);
 
     {
-        let message = flatbuffers::get_root::<Package>(&bytes);
-        assert_eq!(message.kind(), MessageKind::MoveObj);
-        assert_eq!(message.data_type(), DataPack::PosPackage);
-
-        let data = message.data_as_pos_package().unwrap();
-        assert_eq!(data.id(), 1);
-        assert_eq!(data.x(), 0.2);
-        assert_eq!(data.y(), 3.0);
+        let message = flatbuffers::get_root::<Responses>(&bytes);
+        assert_eq!(message.move_obj().unwrap().len(), 1);
+        assert_eq!(message.move_obj().unwrap()[0].id(), 1);
+        assert_eq!(message.move_obj().unwrap()[0].x(), 0.2);
+        assert_eq!(message.move_obj().unwrap()[0].y(), 3.0);
     }
 }

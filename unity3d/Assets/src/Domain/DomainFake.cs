@@ -8,12 +8,7 @@ namespace Domain
     /// </summary>
     public class DomainFake : MonoBehaviour, IDomain
     {
-        public void Execute()
-        {
-            throw new System.NotImplementedException();
-        }
-
-        public List<IEvent> TakeEvents()
+        public List<IResponse> Execute()
         {
             throw new System.NotImplementedException();
         }

@@ -1,0 +1,24 @@
+namespace requests;
+
+enum RequestKind : ushort {
+	SetInputAxis,
+}
+
+struct EmptyPackage {
+    kind: RequestKind;
+}
+
+struct V2Package {
+    x: float32;
+    y: float32;
+}
+
+table StringPackage {
+   buffer: string;
+}
+
+table Requests {
+    axis: V2Package;
+}
+
+

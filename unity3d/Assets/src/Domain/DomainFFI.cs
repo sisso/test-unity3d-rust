@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using server;
+using FlatBuffers;
 using UnityEngine;
 
 namespace Domain
@@ -12,8 +11,6 @@ namespace Domain
     public class DomainFFI : MonoBehaviour, IDomain
     {
         private Ffi.Context ffi;
-
-        private List<IEvent> receivedEvents = new List<IEvent>();
 
         void OnDestroy()
         {
@@ -28,81 +25,48 @@ namespace Domain
 
         public void ConnectToServer(string remoteAddress)
         {
-            throw new System.NotImplementedException();
+            ffi = new Ffi.Context();
         }
 
-        public void Execute()
+        public List<IResponse> Execute()
         {
-            foreach (var package in ffi.Take())
+            List<IResponse> result = new List<IResponse>();
+            
+            ffi.Execute(bytes =>
             {
-                var buffer = new BinaryReader(new MemoryStream(package)); var packageKindId = buffer.ReadInt16();
-                var packageKind = (PackageKind) packageKindId;
-                
-                switch (packageKind)
-                {
-                    case PackageKind.ResponseLogin:
-                        break;
-                    
-                    case PackageKind.ResponseChange:
-                        var e = ParseResponseChange(buffer);
-                        receivedEvents.Add(e);
-                        break;
-                }
-            }
-        }
+                var buffer = new ByteBuffer(bytes);
+                var response = responses.Responses.GetRootAsResponses(buffer);
 
-        public List<IEvent> TakeEvents()
-        {
-            var result = this.receivedEvents;
-            this.receivedEvents = new List<IEvent>();
+                for (int i = 0; i < response.SimpleLength ; i++)
+                {
+                    var kind = response.Simple(i)?.Kind;
+                    switch (kind)
+                    {
+                        case responses.ResponseKind.StartGame:
+                            result.Add(new ResponseStartGame());
+                            break;
+                        default:
+                            Debug.LogWarning($"Unknown kind [${kind}] for simple package");
+                            break;
+                    }
+                }
+
+                for (int i = 0; i < response.CreateObjectLength  ; i++)
+                {
+                    var package= response.CreateObject(i).Value;
+
+                    result.Add(new ResponseSpawn() { id = package.Id, position = new Vector3(package.X, package.Y, 0f) });
+                }
+
+                for (int i = 0; i < response.MoveObjLength; i++)
+                {
+                    var package= response.MoveObj(i).Value;
+
+                    result.Add(new ResponsePos() { id = package.Id, position = new Vector3(package.X, package.Y, 0f) });
+                }
+            });
+            
             return result;
-        }
-
-        private IEvent ParseResponseChange(BinaryReader buffer)
-        {
-            var str = Byte2String(buffer.ReadBytes(Int32.MaxValue));
-            var args = str.Split('\n');
-            switch (args[0])
-            {
-                case "spawn":
-                {
-                    var id = ParseId(args[1]);
-                    var pos = ParsePos(args[2]);
-                    return new EventSpawn() {id = id, position = pos, prefab = args[3]};
-                }
-
-                case "pos":
-                {
-                    var id = ParseId(args[1]);
-                    var pos = ParsePos(args[2]);
-                    return new EventPos() { id = id, position = pos};
-                }
-                
-                default:
-                    throw new Exception($"unexpected event type: '{str}'");
-            }
-        }
-
-        private string Byte2String(byte[] bytes)
-        {
-            return System.Text.Encoding.UTF8.GetString(bytes);
-        }
-
-        private int ParseId(string value)
-        {
-            return int.Parse(value);
-        }
-        private float ParseFloat(string value)
-        {
-            return float.Parse(value);
-        }
-        private Vector3 ParsePos(string value)
-        {
-            var args = value.Split(',');
-            var x = ParseFloat(args[0]);
-            var y = ParseFloat(args[1]);
-            var z = ParseFloat(args[2]);
-            return new Vector3(x, y, z);
         }
     }
 }

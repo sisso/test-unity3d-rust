@@ -1,7 +1,8 @@
 mod ffi_utils;
 
-use crate::game::{Game, Message, UserId};
-use crate::schemas::packages_generated::MessageKind;
+use crate::game::Responses::CreateObj;
+use crate::game::{Game, Responses, UserId};
+use crate::schemas::{requests, responses};
 use ffi_utils::*;
 use flatbuffers::FlatBufferBuilder;
 
@@ -17,21 +18,15 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug)]
 pub struct FfiContext {
-    user_id: UserId,
+    // TODO: game should be a parameters, the same for the messages and how to convert MSG to Pacakge
     game: Game,
-    pending_messages: Vec<RawMsgBuffer>,
 }
 
 impl<'a> FfiContext {
     pub fn new() -> Self {
         let mut game: Game = Game::new();
-        let user_id = game.connect();
 
-        FfiContext {
-            user_id,
-            game,
-            pending_messages: Default::default(),
-        }
+        FfiContext { game }
     }
 
     fn push(&mut self, bytes: &RawMsg) -> Result<()> {
@@ -39,46 +34,54 @@ impl<'a> FfiContext {
     }
 
     // TODO: receive a closure?
-    fn take(&mut self) -> Result<Vec<RawMsgBuffer>> {
-        let mut vec = std::mem::replace(&mut self.pending_messages, Vec::new());
-        let server_msg = self.game.take(self.user_id).into_iter().flat_map(|msg| {
-            match FfiContext::serialize_event(msg) {
-                Ok(bytes) => Some(bytes),
-                Err(e) => {
-                    // TODO: replace by log
-                    eprintln!("fail {:?}", e);
+    fn take(&mut self) -> Result<RawMsgBuffer> {
+        // TODO move buffer to context for reuse
+        let mut fb = FlatBufferBuilder::new();
+
+        macro_rules! create_vector {
+            ($field:expr) => {
+                if $field.is_empty() {
                     None
+                } else {
+                    let v = std::mem::replace(&mut $field, vec![]);
+                    Some(fb.create_vector(v.as_ref()))
+                }
+            };
+        }
+
+        let mut simple = vec![];
+        let mut create_objects = vec![];
+        let mut move_objects = vec![];
+
+        for responses in self.game.take() {
+            match responses {
+                Responses::StartGame => simple.push(responses::EmptyPackage::new(
+                    responses::ResponseKind::StartGame,
+                )),
+                Responses::CreateObj { id, x, y } => {
+                    create_objects.push(responses::CreatePackage::new(
+                        id,
+                        responses::PrefabKind::Player,
+                        x,
+                        y,
+                    ));
+                }
+                Responses::MoveObj { obj_id, x, y } => {
+                    move_objects.push(responses::PosPackage::new(obj_id, x, y));
                 }
             }
-        });
-        vec.extend(server_msg);
-        Ok(vec)
-    }
-
-    fn serialize_event(message: Message) -> Result<RawMsgBuffer> {
-        // let mut bd = FlatBufferBuilder::new();
-        //
-        match message {
-            Message::StartGame => unimplemented!(),
-            Message::CreateObj { id } => unimplemented!(),
-            Message::MoveObj { obj_id, x, y } => unimplemented!(),
-            Message::SetInputAxis { hor, ver } => unimplemented!(),
         }
-        //
-        // let package = Package::create(&mut bd, &package_args);
-        // bd.finish_minimal(package);
-        //
-        // let bytes = bd.finished_data().to_vec();
-        // Ok(bytes)
-    }
 
-    fn parse_event(bytes: &RawMsg) -> Result<Message> {
-        // let kind = parse_kind(bytes);
-        unimplemented!()
-    }
+        let args = responses::ResponsesArgs {
+            simple: create_vector!(simple),
+            create_object: create_vector!(create_objects),
+            move_obj: create_vector!(move_objects),
+        };
 
-    fn parse_kind(bytes: &RawMsg) {
-        unimplemented!();
+        responses::Responses::create(&mut fb, &args);
+
+        // TODO remove this copy
+        Ok(fb.finished_data().to_vec())
     }
 }
 
@@ -113,10 +116,8 @@ pub extern "C" fn server_ffi_take(
 ) -> bool {
     // debug!("server_ffi_push {:?}: {:?}", ctx.get_control_value(), value);
     match ctx.take() {
-        Ok(messages) => {
-            for msg in messages {
-                callback(msg.as_ptr(), msg.len() as u32);
-            }
+        Ok(buffer) => {
+            callback(buffer.as_ptr(), buffer.len() as u32);
             true
         }
 
@@ -130,42 +131,4 @@ pub extern "C" fn server_ffi_take(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::game::Message;
-
-    fn serialize_and_parse(message: Message) -> Result<Message> {
-        let bytes = FfiContext::serialize_event(message)?;
-        FfiContext::parse_event(bytes.as_slice())
-    }
-
-    #[test]
-    fn serialize_start_game() -> Result<()> {
-        let msg = serialize_and_parse(Message::StartGame)?;
-
-        match msg {
-            Message::StartGame => {}
-            other => panic!("unexpected {:?}", other),
-        }
-
-        Ok(())
-    }
-
-    #[test]
-    fn serialize_move_obj() -> Result<()> {
-        let msg = serialize_and_parse(Message::MoveObj {
-            obj_id: 1,
-            x: 0.2,
-            y: 3.0,
-        })?;
-
-        match msg {
-            Message::MoveObj { obj_id, x, y } => {
-                assert_eq!(obj_id, 1);
-                assert_eq!(x, 0.2);
-                assert_eq!(y, 0.3);
-            }
-            other => panic!("unexpected {:?}", other),
-        }
-
-        Ok(())
-    }
 }
