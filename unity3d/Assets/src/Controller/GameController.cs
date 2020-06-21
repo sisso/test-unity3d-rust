@@ -16,6 +16,12 @@ namespace Controller {
     
     public class GameController : MonoBehaviour
     {
+        enum State
+        {
+            Idle,
+            Playing,
+        }
+        
         public RunMode mode;
 
         public string remoteAddress;
@@ -25,6 +31,8 @@ namespace Controller {
         public GameObject playerPrefab;
         
         private IDomain current;
+
+        private State state = State.Idle;
 
         void Start()
         {
@@ -61,37 +69,38 @@ namespace Controller {
             }
             
             DontDestroyOnLoad(this);
+            
+            LoadStartGameScene();
         }
 
         void FixedUpdate()
         {
-            foreach (var e in current.Execute())
+            if (state == State.Playing)
             {
-                if (e is ResponseStartGame)
+                foreach (var e in current.Execute())
                 {
-                    LoadStartGameScene();
-                }
-                else if (e is ResponseSpawn)
-                {
-                    var ev = e as ResponseSpawn;
-                    GameObject obj;
-                    if (ev.prefab == FfiResponses.PrefabKind.Player)
-                        obj = Instantiate(playerPrefab);
-                    else 
-                        throw new System.NotImplementedException();
+                    if (e is ResponseSpawn)
+                    {
+                        var ev = e as ResponseSpawn;
+                        GameObject obj;
+                        if (ev.prefab == FfiResponses.PrefabKind.Player)
+                            obj = Instantiate(playerPrefab);
+                        else
+                            throw new System.NotImplementedException();
 
-                    DomainRef.Add(obj, new RefId(ev.id));
-                    obj.transform.position = ev.position;
-                }
-                else if (e is ResponsePos)
-                {
-                    var ev = e as ResponsePos;
-                    var obj = GetDomainObjById(new RefId(ev.id));
-                    obj.transform.position = ev.position;
-                }
-                else
-                {
-                    throw new System.NotImplementedException();
+                        DomainRef.Add(obj, new RefId(ev.id));
+                        obj.transform.position = ev.position;
+                    }
+                    else if (e is ResponsePos)
+                    {
+                        var ev = e as ResponsePos;
+                        var obj = GetDomainObjById(new RefId(ev.id));
+                        obj.transform.position = ev.position;
+                    }
+                    else
+                    {
+                        throw new System.NotImplementedException();
+                    }
                 }
             }
         }
@@ -99,6 +108,7 @@ namespace Controller {
         private void LoadStartGameScene()
         {
             SceneManager.LoadScene(sceneBuildIndex: 1);
+            state = State.Playing;
         }
 
         void OnGui()

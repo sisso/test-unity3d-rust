@@ -7,9 +7,8 @@ namespace FfiResponses
 
 public enum ResponseKind : ushort
 {
-  StartGame = 0,
-  CreateObj = 1,
-  MoveObj = 2,
+  CreateObj = 0,
+  MoveObj = 1,
 };
 
 

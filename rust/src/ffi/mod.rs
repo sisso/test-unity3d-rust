@@ -49,15 +49,12 @@ impl<'a> FfiContext {
             };
         }
 
-        let mut simple = vec![];
+        // let mut simple = vec![];
         let mut create_objects = vec![];
         let mut move_objects = vec![];
 
         for responses in self.game.take() {
             match responses {
-                Responses::StartGame => simple.push(ffi_responses::EmptyPackage::new(
-                    ffi_responses::ResponseKind::StartGame,
-                )),
                 Responses::CreateObj { id, x, y } => {
                     create_objects.push(ffi_responses::CreatePackage::new(
                         id,
@@ -73,7 +70,8 @@ impl<'a> FfiContext {
         }
 
         let args = ffi_responses::ResponsesArgs {
-            simple: create_vector!(simple),
+            // simple: create_vector!(simple),
+            simple: None,
             create_object: create_vector!(create_objects),
             move_obj: create_vector!(move_objects),
         };

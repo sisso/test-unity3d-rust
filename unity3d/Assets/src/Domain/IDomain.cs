@@ -15,10 +15,6 @@ namespace Domain
     {
     }
 
-    public class ResponseStartGame: IResponse
-    {
-    }
-
     public class ResponseSpawn : IResponse
     {
         public uint id;

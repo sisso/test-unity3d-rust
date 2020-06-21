@@ -48,9 +48,6 @@ namespace Domain
                     var kind = response.Simple(i)?.Kind;
                     switch (kind)
                     {
-                        case FfiResponses.ResponseKind.StartGame:
-                            result.Add(new ResponseStartGame());
-                            break;
                         default:
                             Debug.LogWarning($"Unknown kind [${kind}] for simple package");
                             break;

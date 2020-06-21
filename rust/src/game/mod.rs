@@ -19,7 +19,6 @@ pub type ObjId = u32;
 
 #[derive(Debug, Clone)]
 pub enum Responses {
-    StartGame,
     CreateObj { id: ObjId, x: f32, y: f32 },
     MoveObj { obj_id: ObjId, x: f32, y: f32 },
 }

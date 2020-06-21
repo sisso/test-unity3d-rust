@@ -10,7 +10,7 @@ namespace Domain
     public class DomainFake : MonoBehaviour, IDomain
     {
         public int state = 0;
-        
+
         public List<IResponse> Execute()
         {
             this.state++;
@@ -19,13 +19,12 @@ namespace Domain
 
             if (this.state == 50)
             {
-                responses.Add(new ResponseStartGame());
-            } if (this.state == 100) {
-                responses.Add(new ResponseSpawn() { id = 0, position = new Vector3(0f, 0f, 0f), prefab = PrefabKind.Player});
+                responses.Add(new ResponseSpawn()
+                    {id = 0, position = new Vector3(0f, 0f, 0f), prefab = PrefabKind.Player});
             }
             else if (state > 100)
             {
-                responses.Add(new ResponsePos() { id = 0, position = new Vector3(state / 100f, 0f, 0f)});
+                responses.Add(new ResponsePos() {id = 0, position = new Vector3((state - 100f) / 100f, 0f, 0f)});
             }
 
             return responses;

@@ -21,14 +21,13 @@ pub mod ffi_responses {
 #[repr(u16)]
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum ResponseKind {
-  StartGame = 0,
-  CreateObj = 1,
-  MoveObj = 2,
+  CreateObj = 0,
+  MoveObj = 1,
 
 }
 
 const ENUM_MIN_RESPONSE_KIND: u16 = 0;
-const ENUM_MAX_RESPONSE_KIND: u16 = 2;
+const ENUM_MAX_RESPONSE_KIND: u16 = 1;
 
 impl<'a> flatbuffers::Follow<'a> for ResponseKind {
   type Inner = Self;
@@ -62,15 +61,13 @@ impl flatbuffers::Push for ResponseKind {
 }
 
 #[allow(non_camel_case_types)]
-const ENUM_VALUES_RESPONSE_KIND:[ResponseKind; 3] = [
-  ResponseKind::StartGame,
+const ENUM_VALUES_RESPONSE_KIND:[ResponseKind; 2] = [
   ResponseKind::CreateObj,
   ResponseKind::MoveObj
 ];
 
 #[allow(non_camel_case_types)]
-const ENUM_NAMES_RESPONSE_KIND:[&'static str; 3] = [
-    "StartGame",
+const ENUM_NAMES_RESPONSE_KIND:[&'static str; 2] = [
     "CreateObj",
     "MoveObj"
 ];
