@@ -1,16 +1,17 @@
 extern crate ffi_domain;
 extern crate flatbuffers;
+extern crate game;
 
 use ffi_domain::ffi::FfiContext;
-use ffi_domain::game::Game;
-use ffi_domain::schemas::ffi_responses::*;
 use flatbuffers::FlatBufferBuilder;
+use game::schemas::ffi_responses::*;
+use game::Game;
 
 #[test]
 fn test_flatbuffer_non_root_element() {
     let bytes: [u8; 2] = [1, 0];
     let kind = flatbuffers::follow_cast_ref::<ResponseKind>(&bytes, 0);
-    assert_eq!(*kind, ResponseKind::CreateObj);
+    assert_eq!(*kind, ResponseKind::MoveObj);
 }
 
 #[test]
@@ -33,7 +34,6 @@ fn test_flatbuffer_schema_serialization() {
         bd.finished_data().to_vec()
     };
 
-    println!("{:?}", bytes);
     assert_eq!(bytes.len(), 40);
 
     {

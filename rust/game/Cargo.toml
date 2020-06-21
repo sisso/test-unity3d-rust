@@ -1,0 +1,12 @@
+[package]
+name = "game"
+version = "0.1.0"
+authors = ["sisso <sissobr@gmail.com>"]
+edition = "2018"
+
+[lib]
+name="game"
+
+[dependencies]
+flatbuffers = "0.6.*"
+

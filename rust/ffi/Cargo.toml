@@ -1,0 +1,17 @@
+[package]
+name = "rustlib"
+version = "0.1.0"
+authors = ["sisso <sisso@sisso.com.br>"]
+edition = "2018"
+
+# need to be commented to run example or tests :/
+[lib]
+name="ffi_domain"
+crate-type = ["lib", "cdylib"]
+
+[dependencies]
+libc = "0.2.*"
+base64 = "0.12.*"
+game = { version = "*", path = "../game" }
+flatbuffers = "0.6.*"
+

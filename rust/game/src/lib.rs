@@ -1,4 +1,4 @@
-// TODO: maybe this is GameAdapter?
+pub mod schemas;
 
 /// Implement a game game using the library
 
@@ -18,7 +18,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub type ObjId = u32;
 
 #[derive(Debug, Clone)]
-pub enum Responses {
+pub enum GameEvent {
     CreateObj { id: ObjId, x: f32, y: f32 },
     MoveObj { obj_id: ObjId, x: f32, y: f32 },
 }
@@ -42,19 +42,19 @@ impl Game {
         0
     }
 
-    pub fn take(&mut self) -> Vec<Responses> {
+    pub fn take(&mut self) -> Vec<GameEvent> {
         let mut result = vec![];
 
         self.state += 1;
 
         if (self.state == 50) {
-            result.push(Responses::CreateObj {
+            result.push(GameEvent::CreateObj {
                 id: 0,
                 x: 0.0,
                 y: 0.0,
             })
         } else if (self.state > 50) {
-            result.push(Responses::MoveObj {
+            result.push(GameEvent::MoveObj {
                 obj_id: 0,
                 x: (self.state as f32 - 50.0) / 100.0,
                 y: 0.0,
