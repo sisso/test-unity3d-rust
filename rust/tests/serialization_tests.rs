@@ -1,7 +1,7 @@
 extern crate ffi_server;
 extern crate flatbuffers;
 
-use ffi_server::schemas::responses::*;
+use ffi_server::schemas::ffi_responses::*;
 use flatbuffers::FlatBufferBuilder;
 
 #[test]

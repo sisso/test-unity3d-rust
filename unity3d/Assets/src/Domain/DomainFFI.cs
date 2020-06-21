@@ -30,19 +30,25 @@ namespace Domain
 
         public List<IResponse> Execute()
         {
+            if (ffi == null)
+            {
+                Debug.LogWarning("FFI was not started");
+                return new List<IResponse>();
+            }
+            
             List<IResponse> result = new List<IResponse>();
             
             ffi.Execute(bytes =>
             {
                 var buffer = new ByteBuffer(bytes);
-                var response = responses.Responses.GetRootAsResponses(buffer);
+                var response = FfiResponses.Responses.GetRootAsResponses(buffer);
 
                 for (int i = 0; i < response.SimpleLength ; i++)
                 {
                     var kind = response.Simple(i)?.Kind;
                     switch (kind)
                     {
-                        case responses.ResponseKind.StartGame:
+                        case FfiResponses.ResponseKind.StartGame:
                             result.Add(new ResponseStartGame());
                             break;
                         default:

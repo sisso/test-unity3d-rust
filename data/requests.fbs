@@ -1,4 +1,4 @@
-namespace requests;
+namespace FfiRequests;
 
 enum RequestKind : ushort {
 	SetInputAxis,

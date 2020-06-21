@@ -9,7 +9,7 @@ extern crate flatbuffers;
 use self::flatbuffers::EndianScalar;
 
 #[allow(unused_imports, dead_code)]
-pub mod responses {
+pub mod ffi_responses {
 
   use std::mem;
   use std::cmp::Ordering;
@@ -704,5 +704,5 @@ impl<'a: 'b, 'b> ResponsesBuilder<'a, 'b> {
   }
 }
 
-}  // pub mod responses
+}  // pub mod FfiResponses
 

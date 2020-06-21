@@ -2,7 +2,7 @@ mod ffi_utils;
 
 use crate::game::Responses::CreateObj;
 use crate::game::{Game, Responses, UserId};
-use crate::schemas::{requests, responses};
+use crate::schemas::{ffi_requests, ffi_responses};
 use ffi_utils::*;
 use flatbuffers::FlatBufferBuilder;
 
@@ -55,30 +55,30 @@ impl<'a> FfiContext {
 
         for responses in self.game.take() {
             match responses {
-                Responses::StartGame => simple.push(responses::EmptyPackage::new(
-                    responses::ResponseKind::StartGame,
+                Responses::StartGame => simple.push(ffi_responses::EmptyPackage::new(
+                    ffi_responses::ResponseKind::StartGame,
                 )),
                 Responses::CreateObj { id, x, y } => {
-                    create_objects.push(responses::CreatePackage::new(
+                    create_objects.push(ffi_responses::CreatePackage::new(
                         id,
-                        responses::PrefabKind::Player,
+                        ffi_responses::PrefabKind::Player,
                         x,
                         y,
                     ));
                 }
                 Responses::MoveObj { obj_id, x, y } => {
-                    move_objects.push(responses::PosPackage::new(obj_id, x, y));
+                    move_objects.push(ffi_responses::PosPackage::new(obj_id, x, y));
                 }
             }
         }
 
-        let args = responses::ResponsesArgs {
+        let args = ffi_responses::ResponsesArgs {
             simple: create_vector!(simple),
             create_object: create_vector!(create_objects),
             move_obj: create_vector!(move_objects),
         };
 
-        responses::Responses::create(&mut fb, &args);
+        ffi_responses::Responses::create(&mut fb, &args);
 
         // TODO remove this copy
         Ok(fb.finished_data().to_vec())

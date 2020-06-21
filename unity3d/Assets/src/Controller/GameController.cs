@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
-using Server;
 using Domain;
 using UnityEngine.SceneManagement;
 using UnityEngine.Serialization;
@@ -22,7 +21,7 @@ namespace Controller {
         public string remoteAddress;
 
         public DomainFake fakePrefab;
-        [FormerlySerializedAs("serverPrefab")] public DomainFFI ffiPrefab;
+        public DomainFFI ffiPrefab;
         public GameObject playerPrefab;
         
         private IDomain current;
@@ -33,14 +32,18 @@ namespace Controller {
             {
                 case RunMode.Fake:
                 {
+                    Debug.Log("Starting GameController in Fake mode.");
                     var fake = Instantiate(fakePrefab);
+                    DontDestroyOnLoad(fake.gameObject);
                     current = fake;
                     break;
                 }
                 
                 case RunMode.Local:
                 {
+                    Debug.Log("Starting GameController in FFI Local mode.");
                     var server = Instantiate(ffiPrefab);
+                    DontDestroyOnLoad(server.gameObject);
                     server.StartLocalServer();
                     current = server;
                     break;
@@ -48,7 +51,9 @@ namespace Controller {
                 
                 case RunMode.Remote:
                 {
+                    Debug.Log("Starting GameController in FFI Server mode.");
                     var server = Instantiate(ffiPrefab);
+                    DontDestroyOnLoad(server.gameObject);
                     server.ConnectToServer(remoteAddress);
                     current = server;
                     break;
@@ -64,24 +69,24 @@ namespace Controller {
             {
                 if (e is ResponseStartGame)
                 {
-                    throw new System.NotImplementedException();
+                    LoadStartGameScene();
                 }
                 else if (e is ResponseSpawn)
                 {
                     var ev = e as ResponseSpawn;
                     GameObject obj;
-                    if (ev.prefab == responses.PrefabKind.Player)
+                    if (ev.prefab == FfiResponses.PrefabKind.Player)
                         obj = Instantiate(playerPrefab);
                     else 
                         throw new System.NotImplementedException();
-                    
-                    obj.GetComponent<DomainRef>().id = ev.id;
+
+                    DomainRef.Add(obj, new RefId(ev.id));
                     obj.transform.position = ev.position;
                 }
                 else if (e is ResponsePos)
                 {
                     var ev = e as ResponsePos;
-                    var obj = GetDomainObjById(ev.id);
+                    var obj = GetDomainObjById(new RefId(ev.id));
                     obj.transform.position = ev.position;
                 }
                 else
@@ -91,16 +96,21 @@ namespace Controller {
             }
         }
 
+        private void LoadStartGameScene()
+        {
+            SceneManager.LoadScene(sceneBuildIndex: 1);
+        }
+
         void OnGui()
         {
             
         }
 
-        DomainRef GetDomainObjById(uint id)
+        DomainRef GetDomainObjById(RefId id)
         {
             // TODO: optimize
             return FindObjectsOfType<DomainRef>()
-                .Where(i => i.id == id)
+                .Where(i => i.id.Equals(id))
                 .First();
         }
     }

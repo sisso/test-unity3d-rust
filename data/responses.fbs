@@ -1,4 +1,4 @@
-namespace responses;
+namespace FfiResponses;
 
 enum ResponseKind : ushort {
 	StartGame = 0,

@@ -22,7 +22,7 @@ namespace Domain
     public class ResponseSpawn : IResponse
     {
         public uint id;
-        public responses.PrefabKind prefab;
+        public FfiResponses.PrefabKind prefab;
         public Vector3 position;
     }
 
