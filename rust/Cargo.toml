@@ -3,5 +3,6 @@
 members = [
     "server",
     "game",
-    "ffi"
+    "ffi",
+    "logs",
 ]

@@ -9,3 +9,6 @@ edition = "2018"
 [dependencies]
 
 game = { version = "*", path = "../game" }
+logs = { version = "*", path = "../logs" }
+
+base64 = "0.12.*"

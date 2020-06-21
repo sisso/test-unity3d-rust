@@ -11,6 +11,7 @@ pub type UserId = u16;
 #[derive(Debug)]
 pub enum Error {
     Unknown(String),
+    IOError(String),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

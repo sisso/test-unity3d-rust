@@ -4,20 +4,13 @@ mod responses_generated;
 pub use requests_generated::ffi_requests;
 pub use responses_generated::ffi_responses;
 
-use crate::GameEvent;
+use crate::{GameEvent, Result};
 use flatbuffers::FlatBufferBuilder;
 
 pub type RawMsg = [u8];
 pub type RawMsgBuffer = Vec<u8>;
 
-#[derive(Debug)]
-pub enum SerializationError {
-    Unknown(String),
-}
-
-pub fn serialize_game_events(
-    game_responses: Vec<GameEvent>,
-) -> Result<RawMsgBuffer, SerializationError> {
+pub fn serialize_game_events(game_responses: Vec<GameEvent>) -> Result<RawMsgBuffer> {
     // TODO move buffer to context for reuse
     let mut fb = FlatBufferBuilder::new();
 

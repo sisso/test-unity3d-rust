@@ -1,39 +1,64 @@
 mod ffi_utils;
 
+use crate::client::Client;
 use crate::game::GameEvent::CreateObj;
-use crate::game::{Game, GameEvent, UserId};
+use crate::game::{Game, GameEvent, Result, UserId};
 use ffi_utils::*;
 use flatbuffers::FlatBufferBuilder;
-use game::schemas::{ffi_requests, ffi_responses, RawMsg, RawMsgBuffer, SerializationError};
+use game::schemas::{ffi_requests, ffi_responses, RawMsg, RawMsgBuffer};
+
+#[derive(Debug)]
+enum RunMode {
+    Embedded { game: Game },
+    Server { client: Client },
+}
 
 #[derive(Debug)]
 pub struct FfiContext {
-    // TODO: game should be a parameters, the same for the messages and how to convert MSG to Pacakge
-    game: Game,
+    mode: RunMode,
 }
 
 impl<'a> FfiContext {
-    pub fn new() -> Self {
-        let mut game: Game = Game::new();
+    pub fn new(address: Option<&str>) -> Self {
+        let mode = match address {
+            Some(address) => unimplemented!(),
+            None => RunMode::Embedded { game: Game::new() },
+        };
 
-        FfiContext { game }
+        FfiContext { mode }
     }
 
-    fn push(&mut self, bytes: &RawMsg) -> Result<(), SerializationError> {
+    fn push(&mut self, bytes: &RawMsg) -> Result<()> {
         unimplemented!()
     }
 
     // TODO: receive a closure?
-    fn take(&mut self) -> Result<RawMsgBuffer, SerializationError> {
-        let game_responses = self.game.take();
-        game::schemas::serialize_game_events(game_responses)
+    fn take(&mut self) -> Result<RawMsgBuffer> {
+        match &mut self.mode {
+            RunMode::Embedded { game } => {
+                let game_responses = game.take();
+                game::schemas::serialize_game_events(game_responses)
+            }
+
+            RunMode::Server { client } => client.take_responses(),
+
+            _ => unimplemented!(),
+        }
     }
 }
 
 #[no_mangle]
-pub extern "C" fn server_ffi_context_create() -> Box<FfiContext> {
-    let context = FfiContext::new();
+pub extern "C" fn server_ffi_context_create_embedded() -> Box<FfiContext> {
+    let context = FfiContext::new(None);
     debug!("context_create {:?}", context);
+    Box::new(context)
+}
+
+#[no_mangle]
+pub extern "C" fn server_ffi_context_create_and_connect() -> Box<FfiContext> {
+    let address = "localhost:28483";
+    let context = FfiContext::new(Some(address));
+    debug!("context_create {:?} to {:?}", context, address);
     Box::new(context)
 }
 
