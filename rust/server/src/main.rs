@@ -22,7 +22,8 @@ fn main() {
         }
 
         for ServerInput { connection_id, msg } in changes.inputs {
-            println!("{:?} sends {:?}", connection_id, msg);
+            println!("{:?} receive {:?}", connection_id, msg);
+            server.output(connection_id, "thanks".as_bytes().to_vec());
         }
 
         std::thread::sleep(::std::time::Duration::from_millis(100));

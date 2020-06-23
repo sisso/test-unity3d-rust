@@ -11,10 +11,18 @@ fn main() -> std::io::Result<()> {
         stdin().read_line(&mut buffer)?;
 
         if buffer.starts_with("quit") {
-            client.close();
+            client.close()?;
             return Ok(());
         }
 
-        client.send(buffer.into_bytes().to_vec())?;
+        if buffer != "\n" {
+            client.push(buffer.into_bytes().to_vec());
+        }
+
+        client.tick()?;
+
+        if let Some(bytes) = client.take() {
+            println!("> ${:?}", bytes);
+        }
     }
 }

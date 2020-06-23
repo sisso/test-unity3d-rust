@@ -30,6 +30,7 @@ impl Connection {
     }
 
     pub fn write(&mut self, msg: &RawMsg) -> io::Result<()> {
+        // TODO: buffer big messages?
         self.stream.write(msg)?;
         self.stream.flush()
     }
