@@ -14,9 +14,12 @@ namespace Domain
 
         void OnDestroy()
         {
-            Debug.Log("Closing context");
-            ffi.Dispose();
-            ffi = null;
+            if (ffi != null)
+            {
+                Debug.Log("Closing context");
+                ffi.Dispose();
+                ffi = null;
+            }
         }
 
         public void StartLocalServer() {

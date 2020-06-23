@@ -1,8 +1,9 @@
-﻿#define STATIC_BIND
+﻿#define STATIC_BIND_OFF
 
 using System.Runtime.InteropServices;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 
 namespace Domain.Ffi
@@ -70,6 +71,7 @@ namespace Domain.Ffi
 
         public static IntPtr LoadLibrary(string path)
         {
+            Debug.Log($"Loading library at {path}");
             IntPtr handle = dlopen(path, 0);
             if (handle == IntPtr.Zero)
             {
@@ -80,7 +82,10 @@ namespace Domain.Ffi
  
         public static void CloseLibrary(IntPtr libraryHandle)
         {
-            dlclose(libraryHandle);
+            if (libraryHandle != IntPtr.Zero)
+            {
+                dlclose(libraryHandle);
+            }
         } 
         
         public static T GetLibraryFunction<T>(
@@ -117,15 +122,31 @@ namespace Domain.Ffi
             this.handler = Native.ffi_context_create_embedded();
         #else
             // load library
-            libraryHandle = LoadLibrary("ffi_domain.so");
+            foreach (var t in new string[] { "libffi_domain.so", "libffi_domain", "ffi_domain.so", "ffi_domain" })
+            {
+                try
+                {
+                    libraryHandle = LoadLibrary(t);
+                    Debug.Log($"Success for {t}");
+                }
+                catch (Exception)
+                {
+                    Debug.LogError($"fail for {t}");
+                }
+            }
+
+            // libraryHandle = LoadLibrary("/home/sisso/workspace/test-unity3d-rust/unity3d/Assets/libffi_domain.so");
+            
+            // var libPath = "/libffi_domain.so";
+            // libraryHandle = LoadLibrary(Application.dataPath + libPath);
 
             // load methods
-            this.nativeCloseContext = GetLibraryFunction<CloseContext>(libraryHandle, "server_ffi_context_close");
-            this.nativeContextPush = GetLibraryFunction<ContextPush>(libraryHandle, "server_ffi_push");
-            this.nativeContextTake = GetLibraryFunction<ContextTake>(libraryHandle, "server_ffi_take");
+            this.nativeCloseContext = GetLibraryFunction<CloseContext>(libraryHandle, "ffi_context_close");
+            this.nativeContextPush = GetLibraryFunction<ContextPush>(libraryHandle, "ffi_context_push");
+            this.nativeContextTake = GetLibraryFunction<ContextTake>(libraryHandle, "ffi_context_take");
             
             // start ffi context
-            CreateContext createContext = GetLibraryFunction<CreateContext>(libraryHandle, "server_ffi_context_create");
+            CreateContext createContext = GetLibraryFunction<CreateContext>(libraryHandle, "ffi_context_create_embedded");
             contextHandle = createContext.Invoke();
 #endif
         }
@@ -136,18 +157,15 @@ namespace Domain.Ffi
             handler.Dispose();
         #else
             // close ffi context
-            if (contextHandle != IntPtr.Zero)
+            if (contextHandle != IntPtr.Zero && this.nativeCloseContext != null)
             {
                 this.nativeCloseContext.Invoke(contextHandle);
                 contextHandle = IntPtr.Zero;
             }
 
             // unload library
-            if (libraryHandle != IntPtr.Zero)
-            {
-                CloseLibrary(libraryHandle);
-                libraryHandle = IntPtr.Zero;
-            }
+            CloseLibrary(libraryHandle);
+            libraryHandle = IntPtr.Zero;
 #endif
         }
 

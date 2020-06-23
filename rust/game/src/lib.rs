@@ -1,4 +1,5 @@
 pub mod schemas;
+pub mod binary_protocol;
 
 /// Implement a game game using the library
 
