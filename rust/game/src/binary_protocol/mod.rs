@@ -1,30 +1,30 @@
 use std::env::current_exe;
 
-pub type Frame = Vec<u8>;
+pub type Package = Vec<u8>;
 pub type RawBytes = Vec<u8>;
 
 #[derive(Debug)]
-pub struct FrameBuffer {
+pub struct PackageBuffer {
     size: Option<usize>,
     buffer: Vec<u8>,
 }
 
-impl FrameBuffer {
+impl PackageBuffer {
     pub fn new() -> Self {
-        FrameBuffer {
+        PackageBuffer {
             size: None,
             buffer: vec![],
         }
     }
 
-    pub fn push(&mut self, bytes: RawBytes) -> Vec<Frame> {
+    pub fn push(&mut self, bytes: RawBytes) -> Vec<Package> {
         // println!("push {:?}", bytes);
         self.buffer.extend(bytes);
         // println!("self {:?}", self);
         self.get_frame_to_buffer(vec![])
     }
 
-    fn get_frame_to_buffer(&mut self, mut buffer: Vec<Frame>) -> Vec<Frame> {
+    fn get_frame_to_buffer(&mut self, mut buffer: Vec<Package>) -> Vec<Package> {
         match self.get_frame() {
             Some(frame) => {
                 buffer.push(frame);
@@ -37,7 +37,7 @@ impl FrameBuffer {
         }
     }
 
-    fn get_frame(&mut self) -> Option<Frame> {
+    fn get_frame(&mut self) -> Option<Package> {
 
         let size = match self.size {
             None if self.buffer.len() >= 4 => {
@@ -73,9 +73,9 @@ impl FrameBuffer {
         }
     }
 
-    pub fn pack(frame: Frame) -> RawBytes {
+    pub fn pack(frame: Package) -> RawBytes {
         let mut raw_bytes = vec![];
-        raw_bytes.extend(FrameBuffer::encode_len(frame.len()));
+        raw_bytes.extend(PackageBuffer::encode_len(frame.len()));
         raw_bytes.extend(frame);
         raw_bytes
     }
@@ -87,16 +87,16 @@ impl FrameBuffer {
 
 #[cfg(test)]
 mod test {
-    use crate::binary_protocol::FrameBuffer;
+    use crate::binary_protocol::PackageBuffer;
     use rand::rngs::StdRng;
     use rand::{SeedableRng, Rng};
 
     #[test]
     fn test_protocol() {
-        let mut b = FrameBuffer::new();
+        let mut b = PackageBuffer::new();
 
         let msg_1: [u8; 16] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-        let msg_1_len_bytes = FrameBuffer::encode_len(msg_1.len());
+        let msg_1_len_bytes = PackageBuffer::encode_len(msg_1.len());
 
         assert!(b.push(msg_1_len_bytes[0..1].to_vec()).is_empty());
         assert!(b.push(msg_1_len_bytes[1..4].to_vec()).is_empty());
@@ -127,7 +127,7 @@ mod test {
 
     #[test]
     fn test_protocol_upload() {
-        let mut b = FrameBuffer::new();
+        let mut b = PackageBuffer::new();
 
         let mut buffer = vec![];
 
@@ -139,7 +139,7 @@ mod test {
         ];
 
         for frame in &expected_frames {
-           buffer.extend(FrameBuffer::pack(frame.clone()));
+           buffer.extend(PackageBuffer::pack(frame.clone()));
         }
 
         let mut rng = rand::thread_rng();

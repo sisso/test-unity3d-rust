@@ -21,13 +21,21 @@ struct Connection {
 }
 
 impl Connection {
+    pub fn new(id: u32, stream: TcpStream,) -> Self {
+        let mut buffer = Vec::with_capacity(1024);
+        for _ in 0..1024 {
+            buffer.push(0);
+        }
+        Connection { id, stream, buffer: buffer }
+    }
+
     pub fn write(&mut self, msg: &RawMsg) -> io::Result<()> {
         self.stream.write(msg)?;
         self.stream.flush()
     }
 
     pub fn read(&mut self) -> io::Result<RawMsgBuffer> {
-        let amount = self.stream.read(self.buffer.as_mut_slice())?;
+        let amount = self.stream.read(&mut self.buffer)?;
         if amount == 0 {
             Err(io::Error::from(ErrorKind::ConnectionAborted))
         } else {
@@ -103,11 +111,7 @@ impl SocketServer {
                 .expect(format!("failed to set non_blocking stream for {:?}", id).as_str());
 
             // connection succeeded
-            let connection = Connection {
-                id,
-                stream,
-                buffer: Vec::with_capacity(4096),
-            };
+            let connection = Connection::new(id, stream);
 
             connects.push(id);
             self.connections.insert(connection.id, connection);
