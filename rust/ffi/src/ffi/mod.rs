@@ -20,7 +20,11 @@ pub struct FfiContext {
 impl<'a> FfiContext {
     pub fn new(address: Option<&str>) -> Self {
         let mode = match address {
-            Some(address) => unimplemented!(),
+            Some(address) => {
+                // TODO: should not throw errors here
+                let client = Client::connect(address).unwrap();
+                RunMode::Server { client }
+            },
             None => RunMode::Embedded { game: Game::new() },
         };
 
@@ -32,16 +36,17 @@ impl<'a> FfiContext {
     }
 
     // TODO: receive a closure?
-    pub fn take(&mut self) -> Result<RawMsgBuffer> {
+    pub fn take(&mut self) -> Result<Option<RawMsgBuffer>> {
         match &mut self.mode {
             RunMode::Embedded { game } => {
                 let game_responses = game.take();
                 game::schemas::serialize_game_events(game_responses)
+                    .map(|bytes| Some(bytes))
             }
 
-            RunMode::Server { client } => client.take_responses(),
-
-            _ => unimplemented!(),
+            RunMode::Server { client } =>
+                client.take_responses()
+            ,
         }
     }
 }

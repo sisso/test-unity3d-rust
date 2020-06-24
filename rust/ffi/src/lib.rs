@@ -47,8 +47,12 @@ pub extern "C" fn ffi_context_take(
 ) -> bool {
     // debug!("server_ffi_push {:?}: {:?}", ctx.get_control_value(), value);
     match ctx.take() {
-        Ok(buffer) => {
+        Ok(Some(buffer)) => {
             callback(buffer.as_ptr(), buffer.len() as u32);
+            true
+        }
+
+        Ok(None) => {
             true
         }
 

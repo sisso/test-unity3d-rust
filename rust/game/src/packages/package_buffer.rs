@@ -1,8 +1,11 @@
 use std::env::current_exe;
 
+/// A bytes that represent a single message
 pub type Package = Vec<u8>;
+/// Bytes that represent one. multiples or partial messages
 pub type RawBytes = Vec<u8>;
 
+/// This class buffer incoming RawBytes and chunk into Package
 #[derive(Debug)]
 pub struct PackageBuffer {
     size: Option<usize>,
@@ -87,7 +90,7 @@ impl PackageBuffer {
 
 #[cfg(test)]
 mod test {
-    use crate::binary_protocol::PackageBuffer;
+    use super::*;
     use rand::rngs::StdRng;
     use rand::{SeedableRng, Rng};
 
@@ -139,7 +142,7 @@ mod test {
         ];
 
         for frame in &expected_frames {
-           buffer.extend(PackageBuffer::pack(frame.clone()));
+            buffer.extend(PackageBuffer::pack(frame.clone()));
         }
 
         let mut rng = rand::thread_rng();

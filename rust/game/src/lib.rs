@@ -1,5 +1,5 @@
 pub mod schemas;
-pub mod binary_protocol;
+pub mod packages;
 pub mod client;
 
 /// Implement a game game using the library
@@ -14,6 +14,12 @@ pub type UserId = u16;
 pub enum Error {
     Unknown(String),
     IOError(String),
+}
+
+impl From<std::io::Error> for Error {
+    fn from(e: std::io::Error) -> Self {
+       Error::IOError(format!("{:?}", e))
+    }
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

@@ -2,28 +2,42 @@ extern crate base64;
 
 use crate::server::{Server, ServerInput};
 use std::io::repeat;
+use game::Game;
+use std::collections::HashMap;
+use game::packages::package_buffer::PackageBuffer;
 
 mod server;
 
 fn main() {
     let mut server = server::server_socket::SocketServer::new();
-
     let mut tick: u64 = 0;
+    let mut game = Game::new();
+    let mut users = HashMap::new();
 
     loop {
         let changes = server.run();
 
         for connection_id in changes.connects {
             println!("{:?} connects", connection_id);
+            let user_id = game.connect();
+            users.insert(connection_id, user_id);
         }
 
         for connection_id in changes.disconnects {
             println!("{:?} disconnects", connection_id);
+            users.remove(&connection_id);
         }
 
         for ServerInput { connection_id, msg } in changes.inputs {
             println!("{:?} receive {:?}", connection_id, msg);
-            server.output(connection_id, "thanks".as_bytes().to_vec());
+        }
+
+        let events = game.take();
+        let bytes = game::schemas::serialize_game_events(events).unwrap();
+        let bytes = PackageBuffer::pack(bytes);
+
+        for (connection_id, _) in &users {
+            server.output(*connection_id, bytes.clone());
         }
 
         std::thread::sleep(::std::time::Duration::from_millis(100));

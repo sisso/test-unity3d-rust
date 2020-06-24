@@ -2,7 +2,8 @@ use std::net::{TcpStream, Shutdown};
 use std::io::{Write, Read};
 
 /// Read and write from a socket in non blocking mode with buffers
-pub struct Client {
+#[derive(Debug)]
+pub struct SocketClient {
     stream: TcpStream,
     /// bytes to be send
     output_buffer: Vec<u8>,
@@ -12,7 +13,7 @@ pub struct Client {
     tmp_input_buffer: Vec<u8>,
 }
 
-impl Client {
+impl SocketClient {
     pub fn connect(address: &str) -> std::io::Result<Self> {
         let mut stream = TcpStream::connect(address)?;
         stream.set_nonblocking(true)?;
@@ -22,7 +23,7 @@ impl Client {
             buffer.push(0);
         }
 
-        Ok(Client {
+        Ok(SocketClient {
             stream,
             output_buffer: vec![],
             input_buffer: vec![],

@@ -4,7 +4,7 @@ use game::client::*;
 use std::io::stdin;
 
 fn main() -> std::io::Result<()> {
-    let mut client = Client::connect("localhost:3333")?;
+    let mut client = SocketClient::connect("localhost:3333")?;
 
     loop {
         let mut buffer = String::new();
