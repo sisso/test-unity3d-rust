@@ -69,7 +69,7 @@ impl SocketServer {
         id
     }
 
-    pub fn new() -> Self {
+    pub fn new(port: u32) -> Self {
         let mut ins = SocketServer {
             next_connection_id: 0,
             connections: HashMap::new(),
@@ -77,12 +77,12 @@ impl SocketServer {
             pending_outputs: None,
         };
 
-        ins.start();
+        ins.start(port);
         ins
     }
 
-    fn start(&mut self) {
-        let listener = TcpListener::bind("0.0.0.0:3333").unwrap();
+    fn start(&mut self, port: u32) {
+        let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).unwrap();
         listener.set_nonblocking(true).expect("non blocking failed");
         // accept connections and process them, spawning a new thread for each one
         info!("server - listening on port 3333");

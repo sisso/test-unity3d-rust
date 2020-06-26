@@ -2,6 +2,8 @@ extern crate game;
 
 use crate::ffi::ffi_utils::*;
 use crate::ffi::*;
+use game::Error;
+use std::os::raw::c_char;
 
 #[macro_use]
 pub mod debug;
@@ -16,8 +18,8 @@ pub extern "C" fn ffi_context_create_embedded() -> Box<FfiContext> {
 }
 
 #[no_mangle]
-pub extern "C" fn ffi_context_create_and_connect() -> Box<FfiContext> {
-    let address = "localhost:28483";
+pub extern "C" fn ffi_context_connect(address: *const c_char) -> Box<FfiContext> {
+    let address = "localhost:3333";
     let context = FfiContext::new(Some(address));
     debug!("context_create {:?} to {:?}", context, address);
     Box::new(context)
@@ -54,6 +56,10 @@ pub extern "C" fn ffi_context_take(
 
         Ok(None) => {
             true
+        }
+
+        Err(Error::Disconnect) => {
+            false
         }
 
         Err(err) => {

@@ -23,12 +23,12 @@ namespace Domain
         }
 
         public void StartLocalServer() {
-            ffi = new Ffi.Context();
+            ffi = new Ffi.Context(null);
         }
 
         public void ConnectToServer(string remoteAddress)
         {
-            ffi = new Ffi.Context();
+            ffi = new Ffi.Context(remoteAddress);
         }
 
         public List<IResponse> Execute()

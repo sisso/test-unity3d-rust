@@ -9,7 +9,8 @@ use game::packages::package_buffer::PackageBuffer;
 mod server;
 
 fn main() {
-    let mut server = server::server_socket::SocketServer::new();
+    let port = 3333;
+    let mut server = server::server_socket::SocketServer::new(port);
     let mut tick: u64 = 0;
     let mut game = Game::new();
     let mut users = HashMap::new();

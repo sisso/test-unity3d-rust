@@ -10,4 +10,5 @@ name="game"
 [dependencies]
 flatbuffers = "0.6.*"
 rand = "0.7"
+logs = { version = "*", path = "../logs" }
 

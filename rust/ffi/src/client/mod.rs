@@ -1,37 +1,90 @@
 use game::{schemas::RawMsgBuffer, Error, Result};
 use game::client::SocketClient;
 use game::packages::package_buffer::PackageBuffer;
+use std::io::ErrorKind;
+use logs::*;
+
+#[derive(Debug)]
+enum State {
+    NotConnected,
+    Connected {
+        buffer: PackageBuffer,
+        socket: SocketClient,
+        queue: Vec<RawMsgBuffer>,
+    },
+}
 
 #[derive(Debug)]
 pub struct Client {
-    buffer: PackageBuffer,
-    socket: SocketClient,
-    queue: Vec<RawMsgBuffer>,
+    address: String,
+    state: State,
 }
 
 impl Client {
-    pub fn connect(address: &str) -> Result<Self> {
-        let socket = SocketClient::connect(address)?;
+    pub fn new(address: &str) -> Self {
+        Client {
+            address: address.to_string(),
+            state: State::NotConnected,
+        }
+    }
 
-        Ok(Client {
-            buffer: PackageBuffer::new(),
-            socket,
-            queue: Default::default(),
-        })
+    fn check_connection(&mut self) -> Result<()> {
+        match self.state {
+            State::NotConnected => {
+                // println!("connecting");
+                // TODO: this looks bad, what if connection hangout?
+                let socket = SocketClient::connect(&self.address)?;
+
+                self.state = State::Connected {
+                    buffer: PackageBuffer::new(),
+                    socket,
+                    queue: vec![]
+                };
+
+                // println!("connected");
+            },
+            _ => {}
+        }
+
+        Ok(())
     }
 
     pub fn take_responses(&mut self) -> Result<Option<RawMsgBuffer>> {
-        self.socket.tick();
+        self.check_connection()?;
 
-        if let Some(vec) = self.socket.take() {
-            let packages = self.buffer.push(vec);
-            self.queue.extend(packages);
-        }
+        match &mut self.state {
+            State::Connected {
+                buffer, socket, queue
+            } => {
+                match socket.tick() {
+                    Ok(()) => {
+                        if let Some(vec) = socket.take() {
+                            let packages = buffer.push(vec);
+                            queue.extend(packages);
+                        }
 
-        if self.queue.is_empty() {
-            Ok(None)
-        } else {
-            Ok(Some(self.queue.remove(0)))
+                        if queue.is_empty() {
+                            Ok(None)
+                        } else {
+                            Ok(Some(queue.remove(0)))
+                        }
+                    },
+
+                    Err(e) if e.kind() == std::io::ErrorKind::BrokenPipe=> {
+                        info!("switching to not connected");
+                        self.state = State::NotConnected;
+                        Err(Error::Disconnect)
+                    },
+
+                    Err(e) => {
+                        Err(e.into())
+                    }
+                }
+            },
+            State::NotConnected => {
+                // TODO: should we do something?
+                Err(Error::Disconnect)
+            }
         }
     }
 }

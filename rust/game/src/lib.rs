@@ -13,6 +13,7 @@ pub type UserId = u16;
 #[derive(Debug)]
 pub enum Error {
     Unknown(String),
+    Disconnect,
     IOError(String),
 }
 

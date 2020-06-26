@@ -1,4 +1,5 @@
 use ffi_domain::ffi::FfiContext;
+use std::time::Duration;
 
 fn main() {
     let mut ffi_context = FfiContext::new(Some("localhost:3333"));
@@ -11,12 +12,14 @@ fn main() {
             },
 
             Ok(None) => {
-                // println!("receive none");
+                println!("receive none");
             },
 
             Err(e) => {
                 eprintln!("receive error {:?}", e);
             }
         }
+
+        std::thread::sleep(Duration::from_millis(90));
     }
 }

@@ -22,7 +22,7 @@ impl<'a> FfiContext {
         let mode = match address {
             Some(address) => {
                 // TODO: should not throw errors here
-                let client = Client::connect(address).unwrap();
+                let client = Client::new(address);
                 RunMode::Server { client }
             },
             None => RunMode::Embedded { game: Game::new() },

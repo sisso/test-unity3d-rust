@@ -1,5 +1,5 @@
 use std::net::{TcpStream, Shutdown};
-use std::io::{Write, Read};
+use std::io::{Write, Read, Error, ErrorKind};
 
 /// Read and write from a socket in non blocking mode with buffers
 #[derive(Debug)]
@@ -35,6 +35,7 @@ impl SocketClient {
         self.output_buffer.extend(bytes);
     }
 
+    /// returns ErrorKind::BrokenPipe if connection fail
     pub fn tick(&mut self) -> std::io::Result<()> {
         if !self.output_buffer.is_empty() {
             let size = self.stream.write(&self.output_buffer)?;
@@ -43,11 +44,15 @@ impl SocketClient {
         }
 
         match self.stream.read(&mut self.tmp_input_buffer) {
-            Ok(size) if size > 0 => {
+            Ok(size) if size == 0 => {
+                // println!("empty response!");
+                // Ok(())
+                Err(Error::from(ErrorKind::BrokenPipe))
+            },
+            Ok(size) => {
                self.input_buffer.extend_from_slice(&self.tmp_input_buffer[0..size]);
                Ok(())
             },
-            Ok(_) => Ok(()),
             Err(ref err) if err.kind() == std::io::ErrorKind::WouldBlock => Ok(()),
             Err(e) =>
                Err(e),

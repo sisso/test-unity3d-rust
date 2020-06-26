@@ -1,8 +1,9 @@
-﻿#define STATIC_BIND_OFF
+﻿#define STATIC_BIND
 
 using System.Runtime.InteropServices;
 using System;
 using System.Collections.Generic;
+using System.Net.Sockets;
 using UnityEngine;
 
 
@@ -13,6 +14,8 @@ namespace Domain.Ffi
     {
         [DllImport("ffi_domain.so", CharSet = CharSet.Unicode)]
         internal static extern ContextHandler ffi_context_create_embedded();
+        [DllImport("ffi_domain.so", CharSet = CharSet.Unicode)]
+        internal static extern ContextHandler ffi_context_connect(string address);
         [DllImport("ffi_domain.so", CharSet = CharSet.Unicode)]
         internal static extern void ffi_context_close(IntPtr ptr);
         [DllImport("ffi_domain.so")]
@@ -116,10 +119,17 @@ namespace Domain.Ffi
         
         #endif
 
-        public Context()
+        public Context(string address)
         {
         #if STATIC_BIND
-            this.handler = Native.ffi_context_create_embedded();
+            if (address == null || address.Length == 0)
+            {
+                this.handler = Native.ffi_context_create_embedded();
+            }
+            else
+            {
+                this.handler = Native.ffi_context_connect(address);
+            }
         #else
             // load library
             foreach (var t in new string[] { "libffi_domain.so", "libffi_domain", "ffi_domain.so", "ffi_domain" })
