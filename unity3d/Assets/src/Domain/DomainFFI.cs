@@ -16,7 +16,7 @@ namespace Domain
         {
             if (ffi != null)
             {
-                Debug.Log("Closing context");
+                Debug.Log("Closing ffi context");
                 ffi.Dispose();
                 ffi = null;
             }
@@ -59,14 +59,14 @@ namespace Domain
 
                 for (int i = 0; i < response.CreateObjectLength  ; i++)
                 {
-                    var package= response.CreateObject(i).Value;
+                    var package = response.CreateObject(i).Value;
 
                     result.Add(new ResponseSpawn() { id = package.Id, position = new Vector3(package.X, package.Y, 0f) });
                 }
 
                 for (int i = 0; i < response.MoveObjLength; i++)
                 {
-                    var package= response.MoveObj(i).Value;
+                    var package = response.MoveObj(i).Value;
 
                     result.Add(new ResponsePos() { id = package.Id, position = new Vector3(package.X, package.Y, 0f) });
                 }

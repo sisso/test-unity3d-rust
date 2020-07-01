@@ -1,9 +1,8 @@
-﻿#define STATIC_BIND
+﻿#define NO_STATIC_BIND
 
 using System.Runtime.InteropServices;
 using System;
 using System.Collections.Generic;
-using System.Net.Sockets;
 using UnityEngine;
 
 
@@ -62,6 +61,9 @@ namespace Domain.Ffi
         public static extern IntPtr dlopen(
             string path,
             int flag);
+        
+        [DllImport("__Internal")]
+        public static extern IntPtr dlerror();
  
         [DllImport("__Internal")]
         public static extern IntPtr dlsym(
@@ -74,19 +76,36 @@ namespace Domain.Ffi
 
         public static IntPtr LoadLibrary(string path)
         {
-            Debug.Log($"Loading library at {path}");
-            IntPtr handle = dlopen(path, 0);
+            Debug.Log($"Loading native library at {path}");
+            IntPtr handle = dlopen(path, 2); // 1 lazy, 2 now, 0 ??
             if (handle == IntPtr.Zero)
             {
-                throw new Exception("Couldn't open native library: " + path);
+                var error = GetDLError();
+                throw new Exception("Couldn't open native library at [" + path + "]: " + error);
             }
+
             return handle;
         }
- 
+
+        private static string GetDLError()
+        {
+            var errPtr = dlerror();
+
+            if (errPtr == IntPtr.Zero)
+            {
+                return "Null pointer was returned from dlerror.";
+            }
+            else
+            {
+                return Marshal.PtrToStringAnsi(errPtr);
+            }
+        }
+
         public static void CloseLibrary(IntPtr libraryHandle)
         {
             if (libraryHandle != IntPtr.Zero)
             {
+                Debug.Log("Closing native library");
                 dlclose(libraryHandle);
             }
         } 
@@ -95,10 +114,14 @@ namespace Domain.Ffi
             IntPtr libraryHandle,
             string functionName) where T : class
         {
+        
+            Debug.Log("Load native function "+functionName);
+            
             IntPtr symbol = dlsym(libraryHandle, functionName);
             if (symbol == IntPtr.Zero)
             {
-                throw new Exception("Couldn't get function: " + functionName);
+                var error = GetDLError();
+                throw new Exception("Couldn't get function: " + functionName + ": "+ error);
             }
             return Marshal.GetDelegateForFunctionPointer(
                 symbol,
@@ -132,23 +155,9 @@ namespace Domain.Ffi
             }
         #else
             // load library
-            foreach (var t in new string[] { "libffi_domain.so", "libffi_domain", "ffi_domain.so", "ffi_domain" })
-            {
-                try
-                {
-                    libraryHandle = LoadLibrary(t);
-                    Debug.Log($"Success for {t}");
-                }
-                catch (Exception)
-                {
-                    Debug.LogError($"fail for {t}");
-                }
-            }
-
-            // libraryHandle = LoadLibrary("/home/sisso/workspace/test-unity3d-rust/unity3d/Assets/libffi_domain.so");
-            
-            // var libPath = "/libffi_domain.so";
-            // libraryHandle = LoadLibrary(Application.dataPath + libPath);
+            var libName = "libffi_domain.so";
+            var dataPath = Application.dataPath + "/Plugins/" + libName;
+            libraryHandle = LoadLibrary(dataPath);
 
             // load methods
             this.nativeCloseContext = GetLibraryFunction<CloseContext>(libraryHandle, "ffi_context_close");

@@ -1,6 +1,5 @@
 build
 .idea
 .vs
-*.so
 *.swp
 *.iml

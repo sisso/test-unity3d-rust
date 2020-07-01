@@ -57,16 +57,16 @@ impl Game {
 
         self.state += 1;
 
-        if (self.state == 50) {
+        if (self.state == 25) {
             result.push(GameEvent::CreateObj {
                 id: 0,
                 x: 0.0,
                 y: 0.0,
             })
-        } else if (self.state > 50) {
+        } else if (self.state > 25) {
             result.push(GameEvent::MoveObj {
                 obj_id: 0,
-                x: (self.state as f32 - 50.0) / 100.0,
+                x: (self.state as f32 - 20.0) / 10.0,
                 y: 0.0,
             });
         }

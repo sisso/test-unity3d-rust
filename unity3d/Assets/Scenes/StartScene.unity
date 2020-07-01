@@ -325,7 +325,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a858f3c1a740cb048640434265f2a1a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mode: 2
+  mode: 1
   remoteAddress: localhost:3333
   fakePrefab: {fileID: 113247792929656686, guid: 701d429de559e6094b6735f0c2a70c60,
     type: 3}

@@ -30,6 +30,7 @@ pub extern "C" fn ffi_context_close(ctx: Box<FfiContext>) {
     debug!("context_close {:?}", ctx);
 }
 
+#[no_mangle]
 pub extern "C" fn ffi_context_push(ctx: &mut FfiContext, buffer: *mut u8, length: u32) -> bool {
     let ref_data = to_slice(buffer, length);
     // debug!("server_ffi_push {:?}: {:?}", ctx.get_control_value(), value);
