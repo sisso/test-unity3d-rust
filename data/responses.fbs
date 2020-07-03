@@ -13,6 +13,7 @@ enum ResponseKind : ushort {
 	CreateObj,
 	// Move object to the position
 	MoveObj,
+	InvalidRequest,
 }
 
 enum PrefabKind : ushort {
@@ -72,4 +73,5 @@ table Responses {
     empty_packages: [EmptyPackage];
     create_packages: [CreatePackage];
     pos_packages: [PosPackage];
+    string_packages: [StringPackage];
 }

@@ -18,6 +18,7 @@ namespace Controller {
     {
         enum State
         {
+            Unknown,
             Idle,
             Playing,
         }
@@ -32,12 +33,14 @@ namespace Controller {
         
         private IDomain current;
 
-        private State state = State.Idle;
+        private State state = State.Unknown;
 
         private List<IRequest> pendingRequests = new List<IRequest>();
 
         void Start()
         {
+            DontDestroyOnLoad(this);
+            
             switch (mode)
             {
                 case RunMode.Fake:
@@ -69,68 +72,87 @@ namespace Controller {
                     break;
                 }
             }
-            
-            DontDestroyOnLoad(this);
-            
-            LoadStartGameScene();
+
+            InitializeGame();
         }
 
         void FixedUpdate()
         {
-            if (state == State.Playing)
+            foreach (var req in pendingRequests)
             {
-                var responses = current.Execute(pendingRequests);
-                pendingRequests.Clear();
+                Debug.Log("sending request "+req.GetType().Name);
+            }
+            
+            var responses = current.Execute(pendingRequests);
+            pendingRequests.Clear();
+            
+            foreach (var e in responses)
+            {
+                Debug.Log("receive response "+e.GetType().Name);
                 
-                foreach (var e in responses)
+                if (e is ResponseGameStart || e is ResponseFullState)
                 {
-                    if (e is ResponseGameStart || e is ResponseFullState)
+                    state = State.Playing;
+                    ClearGameState();
+                    LoadStartGameScene();
+                } 
+                else if (e is ResponseGameStatus)
+                {
+                    var resp = e as ResponseGameStatus;
+                    if (resp.status == ResponseGameStatus.GameStatus.Idle)
                     {
-                        ClearGameState();
-                        LoadStartGameScene();
-                    } 
-                    else if (e is ResponseGameStatus)
-                    {
-                        var resp = e as ResponseGameStatus;
-                        if (resp.status == ResponseGameStatus.GameStatus.Idle)
-                        {
-                            pendingRequests.Add(new RequestStartNewGame());
-                        }
-                        else
-                        {
-                            pendingRequests.Add(new RequestFullState());
-                        }
-                    } 
-                    else if (e is ResponseSpawn)
-                    {
-                        var ev = e as ResponseSpawn;
-                        GameObject obj;
-                        if (ev.prefab == FfiResponses.PrefabKind.Player)
-                            obj = Instantiate(playerPrefab);
-                        else
-                            throw new System.NotImplementedException();
-
-                        DomainRef.Add(obj, new RefId(ev.id));
-                        obj.transform.position = ev.position;
-                    }
-                    else if (e is ResponsePos)
-                    {
-                        var ev = e as ResponsePos;
-                        var obj = GetDomainObjById(new RefId(ev.id));
-                        obj.transform.position = ev.position;
+                        Debug.Log("Receive game status. Game is idling. Request  new game");
+                        pendingRequests.Add(new RequestStartNewGame());
+                        state = State.Idle;
                     }
                     else
                     {
-                        throw new System.NotImplementedException();
+                        Debug.Log("Receive game status. Game is in progress. Request full state");
+                        pendingRequests.Add(new RequestFullState());
+                        state = State.Playing;
                     }
+                } 
+                else if (e is ResponseSpawn)
+                {
+                    var ev = e as ResponseSpawn;
+                    Debug.Log($"Receive new spawn of prefab {ev.prefab} with id {ev.id} at {ev.position}");
+                    
+                    GameObject obj;
+                    if (ev.prefab == FfiResponses.PrefabKind.Player)
+                        obj = Instantiate(playerPrefab);
+                    else
+                        throw new System.NotImplementedException();
+
+                    DomainRef.Add(obj, new RefId(ev.id));
+                    obj.transform.position = ev.position;
+                }
+                else if (e is ResponsePos)
+                {
+                    var ev = e as ResponsePos;
+                    Debug.Log($"Receive new position for {ev.id} at {ev.position}");
+                    
+                    var obj = GetDomainObjById(new RefId(ev.id));
+                    obj.transform.position = ev.position;
+                }
+                else
+                {
+                    throw new System.NotImplementedException($"Unsupported server response {e.GetType()}");
                 }
             }
         }
 
-        private void LoadStartGameScene()
+        /// <summary>
+        /// Initialize game by requesting initial state
+        /// </summary>
+        void InitializeGame()
+        {
+            Debug.Log("Requesting game status");
+            pendingRequests.Add(new RequestGameStatus());
+        }
+
+        void LoadStartGameScene()
         {
             SceneManager.LoadScene(sceneBuildIndex: 1);
-            state = State.Playing;
         }
 
         void OnGui()
@@ -140,7 +162,6 @@ namespace Controller {
 
         void ClearGameState()
         {
-            throw new System.NotImplementedException();
         }
 
         DomainRef GetDomainObjById(RefId id)

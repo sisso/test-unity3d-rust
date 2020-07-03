@@ -114,8 +114,7 @@ namespace Domain.Ffi
             IntPtr libraryHandle,
             string functionName) where T : class
         {
-        
-            Debug.Log("Load native function "+functionName);
+            // Debug.Log("Load native function "+functionName);
             
             IntPtr symbol = dlsym(libraryHandle, functionName);
             if (symbol == IntPtr.Zero)

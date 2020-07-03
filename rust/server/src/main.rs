@@ -1,10 +1,10 @@
 extern crate base64;
 
 use crate::server::{Server, ServerInput};
-use std::io::repeat;
+use game::packages::package_buffer::PackageBuffer;
 use game::Game;
 use std::collections::HashMap;
-use game::packages::package_buffer::PackageBuffer;
+use std::io::repeat;
 
 mod server;
 
@@ -33,7 +33,7 @@ fn main() {
             println!("{:?} receive {:?}", connection_id, msg);
         }
 
-        let events = game.take();
+        let events = game.take().unwrap();
         let bytes = game::schemas::serialize_game_events(events).unwrap();
         let bytes = PackageBuffer::pack(bytes);
 

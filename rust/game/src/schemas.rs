@@ -4,11 +4,44 @@ mod responses_generated;
 pub use requests_generated::ffi_requests;
 pub use responses_generated::ffi_responses;
 
-use crate::{GameEvent, Result};
+use crate::{Error, GameEvent, Request, Result};
 use flatbuffers::FlatBufferBuilder;
 
 pub type RawMsg = [u8];
 pub type RawMsgBuffer = Vec<u8>;
+
+pub fn parse_game_requests(requests: &RawMsg) -> Result<Vec<Request>> {
+    let root = flatbuffers::get_root::<ffi_requests::Requests>(requests);
+
+    let total_requests = root.total_messages() as usize;
+    let mut index: Vec<Option<Request>> = Vec::with_capacity(total_requests);
+    for i in 0..total_requests {
+        index.push(None);
+    }
+
+    for package in root.empty_packages().unwrap_or_default().iter() {
+        match package.kind() {
+            ffi_requests::RequestKind::StartGame => {
+                index[package.ordering() as usize] = Some(Request::StartGame)
+            }
+            ffi_requests::RequestKind::GameStatus => {
+                index[package.ordering() as usize] = Some(Request::GameStatus)
+            }
+            ffi_requests::RequestKind::GetAll => {
+                index[package.ordering() as usize] = Some(Request::GetAll)
+            }
+            other => return Err(Error::Unknown(format!("Invalid kind {:?}", other))),
+        }
+    }
+
+    let result: Vec<_> = index.into_iter().flatten().collect();
+
+    if result.len() != total_requests {
+        Err(format!("invalid result {:?}", result).into())
+    } else {
+        Ok(result)
+    }
+}
 
 pub fn serialize_game_events(game_responses: Vec<GameEvent>) -> Result<RawMsgBuffer> {
     // TODO move buffer to context for reuse
@@ -25,7 +58,7 @@ pub fn serialize_game_events(game_responses: Vec<GameEvent>) -> Result<RawMsgBuf
     }
 
     let mut total = 0u32;
-    // let mut empty_packages = vec![];
+    let mut empty_packages = vec![];
     let mut create_packages = vec![];
     let mut pos_packages = vec![];
 
@@ -54,16 +87,36 @@ pub fn serialize_game_events(game_responses: Vec<GameEvent>) -> Result<RawMsgBuf
                     y,
                 ));
             }
+            GameEvent::GameStarted => empty_packages.push(ffi_responses::EmptyPackage::new(
+                ffi_responses::ResponseKind::GameStarted,
+                ordering,
+            )),
+            GameEvent::GameStatusRunning => empty_packages.push(ffi_responses::EmptyPackage::new(
+                ffi_responses::ResponseKind::GameStatusRunning,
+                ordering,
+            )),
+            GameEvent::GameStatusIdle => empty_packages.push(ffi_responses::EmptyPackage::new(
+                ffi_responses::ResponseKind::GameStatusIdle,
+                ordering,
+            )),
+            GameEvent::FullStateResponse => empty_packages.push(ffi_responses::EmptyPackage::new(
+                ffi_responses::ResponseKind::FullStateResponse,
+                ordering,
+            )),
         }
     }
 
     if total != total_game_responses as u32 {
-        panic!("invalid response count");
+        return Err(format!(
+            "invalid response count {:?}, expected {:?}",
+            total, total_game_responses
+        )
+        .into());
     }
 
     let args = ffi_responses::ResponsesArgs {
         total_messages: total,
-        empty_packages: None,
+        empty_packages: create_vector!(empty_packages),
         create_packages: create_vector!(create_packages),
         pos_packages: create_vector!(pos_packages),
     };
