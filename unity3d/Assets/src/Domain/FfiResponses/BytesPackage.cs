@@ -18,24 +18,32 @@ public struct BytesPackage : IFlatbufferObject
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
   public BytesPackage __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public sbyte Buffer(int j) { int o = __p.__offset(4); return o != 0 ? __p.bb.GetSbyte(__p.__vector(o) + j * 1) : (sbyte)0; }
-  public int BufferLength { get { int o = __p.__offset(4); return o != 0 ? __p.__vector_len(o) : 0; } }
+  public FfiResponses.ResponseKind Kind { get { int o = __p.__offset(4); return o != 0 ? (FfiResponses.ResponseKind)__p.bb.GetUshort(o + __p.bb_pos) : FfiResponses.ResponseKind.GameStarted; } }
+  public uint Ordering { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public sbyte Buffer(int j) { int o = __p.__offset(8); return o != 0 ? __p.bb.GetSbyte(__p.__vector(o) + j * 1) : (sbyte)0; }
+  public int BufferLength { get { int o = __p.__offset(8); return o != 0 ? __p.__vector_len(o) : 0; } }
 #if ENABLE_SPAN_T
-  public Span<sbyte> GetBufferBytes() { return __p.__vector_as_span<sbyte>(4, 1); }
+  public Span<sbyte> GetBufferBytes() { return __p.__vector_as_span<sbyte>(8, 1); }
 #else
-  public ArraySegment<byte>? GetBufferBytes() { return __p.__vector_as_arraysegment(4); }
+  public ArraySegment<byte>? GetBufferBytes() { return __p.__vector_as_arraysegment(8); }
 #endif
-  public sbyte[] GetBufferArray() { return __p.__vector_as_array<sbyte>(4); }
+  public sbyte[] GetBufferArray() { return __p.__vector_as_array<sbyte>(8); }
 
   public static Offset<FfiResponses.BytesPackage> CreateBytesPackage(FlatBufferBuilder builder,
+      FfiResponses.ResponseKind kind = FfiResponses.ResponseKind.GameStarted,
+      uint ordering = 0,
       VectorOffset bufferOffset = default(VectorOffset)) {
-    builder.StartTable(1);
+    builder.StartTable(3);
     BytesPackage.AddBuffer(builder, bufferOffset);
+    BytesPackage.AddOrdering(builder, ordering);
+    BytesPackage.AddKind(builder, kind);
     return BytesPackage.EndBytesPackage(builder);
   }
 
-  public static void StartBytesPackage(FlatBufferBuilder builder) { builder.StartTable(1); }
-  public static void AddBuffer(FlatBufferBuilder builder, VectorOffset bufferOffset) { builder.AddOffset(0, bufferOffset.Value, 0); }
+  public static void StartBytesPackage(FlatBufferBuilder builder) { builder.StartTable(3); }
+  public static void AddKind(FlatBufferBuilder builder, FfiResponses.ResponseKind kind) { builder.AddUshort(0, (ushort)kind, 0); }
+  public static void AddOrdering(FlatBufferBuilder builder, uint ordering) { builder.AddUint(1, ordering, 0); }
+  public static void AddBuffer(FlatBufferBuilder builder, VectorOffset bufferOffset) { builder.AddOffset(2, bufferOffset.Value, 0); }
   public static VectorOffset CreateBufferVector(FlatBufferBuilder builder, sbyte[] data) { builder.StartVector(1, data.Length, 1); for (int i = data.Length - 1; i >= 0; i--) builder.AddSbyte(data[i]); return builder.EndVector(); }
   public static VectorOffset CreateBufferVectorBlock(FlatBufferBuilder builder, sbyte[] data) { builder.StartVector(1, data.Length, 1); builder.Add(data); return builder.EndVector(); }
   public static void StartBufferVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(1, numElems, 1); }

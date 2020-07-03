@@ -7,7 +7,10 @@ namespace FfiRequests
 
 public enum RequestKind : ushort
 {
-  SetInputAxis = 0,
+  GameStatus = 0,
+  StartGame = 1,
+  GetAll = 2,
+  SetInputAxis = 3,
 };
 
 

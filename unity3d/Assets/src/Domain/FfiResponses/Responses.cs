@@ -18,31 +18,35 @@ public struct Responses : IFlatbufferObject
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
   public Responses __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public FfiResponses.EmptyPackage? Simple(int j) { int o = __p.__offset(4); return o != 0 ? (FfiResponses.EmptyPackage?)(new FfiResponses.EmptyPackage()).__assign(__p.__vector(o) + j * 2, __p.bb) : null; }
-  public int SimpleLength { get { int o = __p.__offset(4); return o != 0 ? __p.__vector_len(o) : 0; } }
-  public FfiResponses.CreatePackage? CreateObject(int j) { int o = __p.__offset(6); return o != 0 ? (FfiResponses.CreatePackage?)(new FfiResponses.CreatePackage()).__assign(__p.__vector(o) + j * 16, __p.bb) : null; }
-  public int CreateObjectLength { get { int o = __p.__offset(6); return o != 0 ? __p.__vector_len(o) : 0; } }
-  public FfiResponses.PosPackage? MoveObj(int j) { int o = __p.__offset(8); return o != 0 ? (FfiResponses.PosPackage?)(new FfiResponses.PosPackage()).__assign(__p.__vector(o) + j * 12, __p.bb) : null; }
-  public int MoveObjLength { get { int o = __p.__offset(8); return o != 0 ? __p.__vector_len(o) : 0; } }
+  public uint TotalMessages { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public FfiResponses.EmptyPackage? EmptyPackages(int j) { int o = __p.__offset(6); return o != 0 ? (FfiResponses.EmptyPackage?)(new FfiResponses.EmptyPackage()).__assign(__p.__vector(o) + j * 8, __p.bb) : null; }
+  public int EmptyPackagesLength { get { int o = __p.__offset(6); return o != 0 ? __p.__vector_len(o) : 0; } }
+  public FfiResponses.CreatePackage? CreatePackages(int j) { int o = __p.__offset(8); return o != 0 ? (FfiResponses.CreatePackage?)(new FfiResponses.CreatePackage()).__assign(__p.__vector(o) + j * 24, __p.bb) : null; }
+  public int CreatePackagesLength { get { int o = __p.__offset(8); return o != 0 ? __p.__vector_len(o) : 0; } }
+  public FfiResponses.PosPackage? PosPackages(int j) { int o = __p.__offset(10); return o != 0 ? (FfiResponses.PosPackage?)(new FfiResponses.PosPackage()).__assign(__p.__vector(o) + j * 20, __p.bb) : null; }
+  public int PosPackagesLength { get { int o = __p.__offset(10); return o != 0 ? __p.__vector_len(o) : 0; } }
 
   public static Offset<FfiResponses.Responses> CreateResponses(FlatBufferBuilder builder,
-      VectorOffset simpleOffset = default(VectorOffset),
-      VectorOffset create_objectOffset = default(VectorOffset),
-      VectorOffset move_objOffset = default(VectorOffset)) {
-    builder.StartTable(3);
-    Responses.AddMoveObj(builder, move_objOffset);
-    Responses.AddCreateObject(builder, create_objectOffset);
-    Responses.AddSimple(builder, simpleOffset);
+      uint total_messages = 0,
+      VectorOffset empty_packagesOffset = default(VectorOffset),
+      VectorOffset create_packagesOffset = default(VectorOffset),
+      VectorOffset pos_packagesOffset = default(VectorOffset)) {
+    builder.StartTable(4);
+    Responses.AddPosPackages(builder, pos_packagesOffset);
+    Responses.AddCreatePackages(builder, create_packagesOffset);
+    Responses.AddEmptyPackages(builder, empty_packagesOffset);
+    Responses.AddTotalMessages(builder, total_messages);
     return Responses.EndResponses(builder);
   }
 
-  public static void StartResponses(FlatBufferBuilder builder) { builder.StartTable(3); }
-  public static void AddSimple(FlatBufferBuilder builder, VectorOffset simpleOffset) { builder.AddOffset(0, simpleOffset.Value, 0); }
-  public static void StartSimpleVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(2, numElems, 2); }
-  public static void AddCreateObject(FlatBufferBuilder builder, VectorOffset createObjectOffset) { builder.AddOffset(1, createObjectOffset.Value, 0); }
-  public static void StartCreateObjectVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(16, numElems, 4); }
-  public static void AddMoveObj(FlatBufferBuilder builder, VectorOffset moveObjOffset) { builder.AddOffset(2, moveObjOffset.Value, 0); }
-  public static void StartMoveObjVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(12, numElems, 4); }
+  public static void StartResponses(FlatBufferBuilder builder) { builder.StartTable(4); }
+  public static void AddTotalMessages(FlatBufferBuilder builder, uint totalMessages) { builder.AddUint(0, totalMessages, 0); }
+  public static void AddEmptyPackages(FlatBufferBuilder builder, VectorOffset emptyPackagesOffset) { builder.AddOffset(1, emptyPackagesOffset.Value, 0); }
+  public static void StartEmptyPackagesVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(8, numElems, 4); }
+  public static void AddCreatePackages(FlatBufferBuilder builder, VectorOffset createPackagesOffset) { builder.AddOffset(2, createPackagesOffset.Value, 0); }
+  public static void StartCreatePackagesVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(24, numElems, 4); }
+  public static void AddPosPackages(FlatBufferBuilder builder, VectorOffset posPackagesOffset) { builder.AddOffset(3, posPackagesOffset.Value, 0); }
+  public static void StartPosPackagesVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(20, numElems, 4); }
   public static Offset<FfiResponses.Responses> EndResponses(FlatBufferBuilder builder) {
     int o = builder.EndTable();
     return new Offset<FfiResponses.Responses>(o);

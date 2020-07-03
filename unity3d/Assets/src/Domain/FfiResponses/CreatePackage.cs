@@ -15,18 +15,23 @@ public struct CreatePackage : IFlatbufferObject
   public void __init(int _i, ByteBuffer _bb) { __p = new Struct(_i, _bb); }
   public CreatePackage __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public uint Id { get { return __p.bb.GetUint(__p.bb_pos + 0); } }
-  public FfiResponses.PrefabKind Prefab { get { return (FfiResponses.PrefabKind)__p.bb.GetUshort(__p.bb_pos + 4); } }
-  public float X { get { return __p.bb.GetFloat(__p.bb_pos + 8); } }
-  public float Y { get { return __p.bb.GetFloat(__p.bb_pos + 12); } }
+  public FfiResponses.ResponseKind Kind { get { return (FfiResponses.ResponseKind)__p.bb.GetUshort(__p.bb_pos + 0); } }
+  public uint Ordering { get { return __p.bb.GetUint(__p.bb_pos + 4); } }
+  public uint Id { get { return __p.bb.GetUint(__p.bb_pos + 8); } }
+  public FfiResponses.PrefabKind Prefab { get { return (FfiResponses.PrefabKind)__p.bb.GetUshort(__p.bb_pos + 12); } }
+  public float X { get { return __p.bb.GetFloat(__p.bb_pos + 16); } }
+  public float Y { get { return __p.bb.GetFloat(__p.bb_pos + 20); } }
 
-  public static Offset<FfiResponses.CreatePackage> CreateCreatePackage(FlatBufferBuilder builder, uint Id, FfiResponses.PrefabKind Prefab, float X, float Y) {
-    builder.Prep(4, 16);
+  public static Offset<FfiResponses.CreatePackage> CreateCreatePackage(FlatBufferBuilder builder, FfiResponses.ResponseKind Kind, uint Ordering, uint Id, FfiResponses.PrefabKind Prefab, float X, float Y) {
+    builder.Prep(4, 24);
     builder.PutFloat(Y);
     builder.PutFloat(X);
     builder.Pad(2);
     builder.PutUshort((ushort)Prefab);
     builder.PutUint(Id);
+    builder.PutUint(Ordering);
+    builder.Pad(2);
+    builder.PutUshort((ushort)Kind);
     return new Offset<FfiResponses.CreatePackage>(builder.Offset);
   }
 };

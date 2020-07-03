@@ -18,23 +18,31 @@ public struct StringPackage : IFlatbufferObject
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
   public StringPackage __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public string Buffer { get { int o = __p.__offset(4); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
+  public FfiResponses.ResponseKind Kind { get { int o = __p.__offset(4); return o != 0 ? (FfiResponses.ResponseKind)__p.bb.GetUshort(o + __p.bb_pos) : FfiResponses.ResponseKind.GameStarted; } }
+  public uint Ordering { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public string Buffer { get { int o = __p.__offset(8); return o != 0 ? __p.__string(o + __p.bb_pos) : null; } }
 #if ENABLE_SPAN_T
-  public Span<byte> GetBufferBytes() { return __p.__vector_as_span<byte>(4, 1); }
+  public Span<byte> GetBufferBytes() { return __p.__vector_as_span<byte>(8, 1); }
 #else
-  public ArraySegment<byte>? GetBufferBytes() { return __p.__vector_as_arraysegment(4); }
+  public ArraySegment<byte>? GetBufferBytes() { return __p.__vector_as_arraysegment(8); }
 #endif
-  public byte[] GetBufferArray() { return __p.__vector_as_array<byte>(4); }
+  public byte[] GetBufferArray() { return __p.__vector_as_array<byte>(8); }
 
   public static Offset<FfiResponses.StringPackage> CreateStringPackage(FlatBufferBuilder builder,
+      FfiResponses.ResponseKind kind = FfiResponses.ResponseKind.GameStarted,
+      uint ordering = 0,
       StringOffset bufferOffset = default(StringOffset)) {
-    builder.StartTable(1);
+    builder.StartTable(3);
     StringPackage.AddBuffer(builder, bufferOffset);
+    StringPackage.AddOrdering(builder, ordering);
+    StringPackage.AddKind(builder, kind);
     return StringPackage.EndStringPackage(builder);
   }
 
-  public static void StartStringPackage(FlatBufferBuilder builder) { builder.StartTable(1); }
-  public static void AddBuffer(FlatBufferBuilder builder, StringOffset bufferOffset) { builder.AddOffset(0, bufferOffset.Value, 0); }
+  public static void StartStringPackage(FlatBufferBuilder builder) { builder.StartTable(3); }
+  public static void AddKind(FlatBufferBuilder builder, FfiResponses.ResponseKind kind) { builder.AddUshort(0, (ushort)kind, 0); }
+  public static void AddOrdering(FlatBufferBuilder builder, uint ordering) { builder.AddUint(1, ordering, 0); }
+  public static void AddBuffer(FlatBufferBuilder builder, StringOffset bufferOffset) { builder.AddOffset(2, bufferOffset.Value, 0); }
   public static Offset<FfiResponses.StringPackage> EndStringPackage(FlatBufferBuilder builder) {
     int o = builder.EndTable();
     return new Offset<FfiResponses.StringPackage>(o);

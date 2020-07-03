@@ -34,6 +34,8 @@ namespace Controller {
 
         private State state = State.Idle;
 
+        private List<IRequest> pendingRequests = new List<IRequest>();
+
         void Start()
         {
             switch (mode)
@@ -77,9 +79,29 @@ namespace Controller {
         {
             if (state == State.Playing)
             {
-                foreach (var e in current.Execute())
+                var responses = current.Execute(pendingRequests);
+                pendingRequests.Clear();
+                
+                foreach (var e in responses)
                 {
-                    if (e is ResponseSpawn)
+                    if (e is ResponseGameStart || e is ResponseFullState)
+                    {
+                        ClearGameState();
+                        LoadStartGameScene();
+                    } 
+                    else if (e is ResponseGameStatus)
+                    {
+                        var resp = e as ResponseGameStatus;
+                        if (resp.status == ResponseGameStatus.GameStatus.Idle)
+                        {
+                            pendingRequests.Add(new RequestStartNewGame());
+                        }
+                        else
+                        {
+                            pendingRequests.Add(new RequestFullState());
+                        }
+                    } 
+                    else if (e is ResponseSpawn)
                     {
                         var ev = e as ResponseSpawn;
                         GameObject obj;
@@ -114,6 +136,11 @@ namespace Controller {
         void OnGui()
         {
             
+        }
+
+        void ClearGameState()
+        {
+            throw new System.NotImplementedException();
         }
 
         DomainRef GetDomainObjById(RefId id)

@@ -11,7 +11,7 @@ namespace Domain
     {
         public int state = 0;
 
-        public List<IResponse> Execute()
+        public List<IResponse> Execute(List<IRequest> requests)
         {
             this.state++;
 
@@ -29,5 +29,6 @@ namespace Domain
 
             return responses;
         }
+
     }
 }

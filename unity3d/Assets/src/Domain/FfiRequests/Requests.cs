@@ -18,10 +18,29 @@ public struct Requests : IFlatbufferObject
   public void __init(int _i, ByteBuffer _bb) { __p = new Table(_i, _bb); }
   public Requests __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public FfiRequests.V2Package? Axis { get { int o = __p.__offset(4); return o != 0 ? (FfiRequests.V2Package?)(new FfiRequests.V2Package()).__assign(o + __p.bb_pos, __p.bb) : null; } }
+  public uint TotalMessages { get { int o = __p.__offset(4); return o != 0 ? __p.bb.GetUint(o + __p.bb_pos) : (uint)0; } }
+  public FfiRequests.EmptyPackage? EmptyPackages(int j) { int o = __p.__offset(6); return o != 0 ? (FfiRequests.EmptyPackage?)(new FfiRequests.EmptyPackage()).__assign(__p.__vector(o) + j * 8, __p.bb) : null; }
+  public int EmptyPackagesLength { get { int o = __p.__offset(6); return o != 0 ? __p.__vector_len(o) : 0; } }
+  public FfiRequests.V2Package? V2Packages(int j) { int o = __p.__offset(8); return o != 0 ? (FfiRequests.V2Package?)(new FfiRequests.V2Package()).__assign(__p.__vector(o) + j * 16, __p.bb) : null; }
+  public int V2PackagesLength { get { int o = __p.__offset(8); return o != 0 ? __p.__vector_len(o) : 0; } }
 
-  public static void StartRequests(FlatBufferBuilder builder) { builder.StartTable(1); }
-  public static void AddAxis(FlatBufferBuilder builder, Offset<FfiRequests.V2Package> axisOffset) { builder.AddStruct(0, axisOffset.Value, 0); }
+  public static Offset<FfiRequests.Requests> CreateRequests(FlatBufferBuilder builder,
+      uint total_messages = 0,
+      VectorOffset empty_packagesOffset = default(VectorOffset),
+      VectorOffset v2_packagesOffset = default(VectorOffset)) {
+    builder.StartTable(3);
+    Requests.AddV2Packages(builder, v2_packagesOffset);
+    Requests.AddEmptyPackages(builder, empty_packagesOffset);
+    Requests.AddTotalMessages(builder, total_messages);
+    return Requests.EndRequests(builder);
+  }
+
+  public static void StartRequests(FlatBufferBuilder builder) { builder.StartTable(3); }
+  public static void AddTotalMessages(FlatBufferBuilder builder, uint totalMessages) { builder.AddUint(0, totalMessages, 0); }
+  public static void AddEmptyPackages(FlatBufferBuilder builder, VectorOffset emptyPackagesOffset) { builder.AddOffset(1, emptyPackagesOffset.Value, 0); }
+  public static void StartEmptyPackagesVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(8, numElems, 4); }
+  public static void AddV2Packages(FlatBufferBuilder builder, VectorOffset v2PackagesOffset) { builder.AddOffset(2, v2PackagesOffset.Value, 0); }
+  public static void StartV2PackagesVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(16, numElems, 4); }
   public static Offset<FfiRequests.Requests> EndRequests(FlatBufferBuilder builder) {
     int o = builder.EndTable();
     return new Offset<FfiRequests.Requests>(o);

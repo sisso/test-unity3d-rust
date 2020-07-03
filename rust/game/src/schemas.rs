@@ -24,14 +24,21 @@ pub fn serialize_game_events(game_responses: Vec<GameEvent>) -> Result<RawMsgBuf
         };
     }
 
-    // let mut simple = vec![];
-    let mut create_objects = vec![];
-    let mut move_objects = vec![];
+    let mut total = 0u32;
+    // let mut empty_packages = vec![];
+    let mut create_packages = vec![];
+    let mut pos_packages = vec![];
 
+    let total_game_responses = game_responses.len();
     for responses in game_responses {
+        let ordering = total;
+        total += 1;
+
         match responses {
             GameEvent::CreateObj { id, x, y } => {
-                create_objects.push(ffi_responses::CreatePackage::new(
+                create_packages.push(ffi_responses::CreatePackage::new(
+                    ffi_responses::ResponseKind::CreateObj,
+                    ordering,
                     id,
                     ffi_responses::PrefabKind::Player,
                     x,
@@ -39,16 +46,26 @@ pub fn serialize_game_events(game_responses: Vec<GameEvent>) -> Result<RawMsgBuf
                 ));
             }
             GameEvent::MoveObj { obj_id, x, y } => {
-                move_objects.push(ffi_responses::PosPackage::new(obj_id, x, y));
+                pos_packages.push(ffi_responses::PosPackage::new(
+                    ffi_responses::ResponseKind::MoveObj,
+                    ordering,
+                    obj_id,
+                    x,
+                    y,
+                ));
             }
         }
     }
 
+    if total != total_game_responses as u32 {
+        panic!("invalid response count");
+    }
+
     let args = ffi_responses::ResponsesArgs {
-        // simple: create_vector!(simple),
-        simple: None,
-        create_object: create_vector!(create_objects),
-        move_obj: create_vector!(move_objects),
+        total_messages: total,
+        empty_packages: None,
+        create_packages: create_vector!(create_packages),
+        pos_packages: create_vector!(pos_packages),
     };
 
     let out = ffi_responses::Responses::create(&mut fb, &args);

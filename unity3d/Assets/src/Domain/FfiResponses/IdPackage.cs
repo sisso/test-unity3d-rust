@@ -15,11 +15,16 @@ public struct IdPackage : IFlatbufferObject
   public void __init(int _i, ByteBuffer _bb) { __p = new Struct(_i, _bb); }
   public IdPackage __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public uint Id { get { return __p.bb.GetUint(__p.bb_pos + 0); } }
+  public FfiResponses.ResponseKind Kind { get { return (FfiResponses.ResponseKind)__p.bb.GetUshort(__p.bb_pos + 0); } }
+  public uint Ordering { get { return __p.bb.GetUint(__p.bb_pos + 4); } }
+  public uint Id { get { return __p.bb.GetUint(__p.bb_pos + 8); } }
 
-  public static Offset<FfiResponses.IdPackage> CreateIdPackage(FlatBufferBuilder builder, uint Id) {
-    builder.Prep(4, 4);
+  public static Offset<FfiResponses.IdPackage> CreateIdPackage(FlatBufferBuilder builder, FfiResponses.ResponseKind Kind, uint Ordering, uint Id) {
+    builder.Prep(4, 12);
     builder.PutUint(Id);
+    builder.PutUint(Ordering);
+    builder.Pad(2);
+    builder.PutUshort((ushort)Kind);
     return new Offset<FfiResponses.IdPackage>(builder.Offset);
   }
 };

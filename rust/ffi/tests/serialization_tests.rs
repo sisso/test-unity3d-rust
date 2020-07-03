@@ -9,9 +9,9 @@ use game::Game;
 
 #[test]
 fn test_flatbuffer_non_root_element() {
-    let bytes: [u8; 2] = [1, 0];
+    let bytes: [u8; 2] = [0, 0];
     let kind = flatbuffers::follow_cast_ref::<ResponseKind>(&bytes, 0);
-    assert_eq!(*kind, ResponseKind::MoveObj);
+    assert_eq!(*kind, ResponseKind::GameStarted);
 }
 
 #[test]
@@ -19,14 +19,15 @@ fn test_flatbuffer_schema_serialization() {
     let bytes = {
         let mut bd = FlatBufferBuilder::new();
 
-        let v = bd.create_vector(&[PosPackage::new(1, 0.2, 3.0)]);
+        let v = bd.create_vector(&[PosPackage::new(ResponseKind::MoveObj, 0, 1, 0.2, 3.0)]);
 
         let package = Responses::create(
             &mut bd,
             &ResponsesArgs {
-                simple: None,
-                create_object: None,
-                move_obj: Some(v),
+                total_messages: 1,
+                empty_packages: None,
+                create_packages: None,
+                pos_packages: Some(v),
             },
         );
 
@@ -34,13 +35,15 @@ fn test_flatbuffer_schema_serialization() {
         bd.finished_data().to_vec()
     };
 
-    assert_eq!(bytes.len(), 40);
+    // just to know the size, can be updated if fail
+    assert_eq!(bytes.len(), 52);
 
     {
         let message = flatbuffers::get_root::<Responses>(&bytes);
-        assert_eq!(message.move_obj().unwrap().len(), 1);
-        assert_eq!(message.move_obj().unwrap()[0].id(), 1);
-        assert_eq!(message.move_obj().unwrap()[0].x(), 0.2);
-        assert_eq!(message.move_obj().unwrap()[0].y(), 3.0);
+        assert_eq!(message.total_messages(), 1);
+        assert_eq!(message.pos_packages().unwrap().len(), 1);
+        assert_eq!(message.pos_packages().unwrap()[0].id(), 1);
+        assert_eq!(message.pos_packages().unwrap()[0].x(), 0.2);
+        assert_eq!(message.pos_packages().unwrap()[0].y(), 3.0);
     }
 }

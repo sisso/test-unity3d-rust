@@ -21,13 +21,17 @@ pub mod ffi_responses {
 #[repr(u16)]
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum ResponseKind {
-  CreateObj = 0,
-  MoveObj = 1,
+  GameStarted = 0,
+  GameStatusIdle = 1,
+  GameStatusRunning = 2,
+  FullStateResponse = 3,
+  CreateObj = 4,
+  MoveObj = 5,
 
 }
 
 const ENUM_MIN_RESPONSE_KIND: u16 = 0;
-const ENUM_MAX_RESPONSE_KIND: u16 = 1;
+const ENUM_MAX_RESPONSE_KIND: u16 = 5;
 
 impl<'a> flatbuffers::Follow<'a> for ResponseKind {
   type Inner = Self;
@@ -61,13 +65,21 @@ impl flatbuffers::Push for ResponseKind {
 }
 
 #[allow(non_camel_case_types)]
-const ENUM_VALUES_RESPONSE_KIND:[ResponseKind; 2] = [
+const ENUM_VALUES_RESPONSE_KIND:[ResponseKind; 6] = [
+  ResponseKind::GameStarted,
+  ResponseKind::GameStatusIdle,
+  ResponseKind::GameStatusRunning,
+  ResponseKind::FullStateResponse,
   ResponseKind::CreateObj,
   ResponseKind::MoveObj
 ];
 
 #[allow(non_camel_case_types)]
-const ENUM_NAMES_RESPONSE_KIND:[&'static str; 2] = [
+const ENUM_NAMES_RESPONSE_KIND:[&'static str; 6] = [
+    "GameStarted",
+    "GameStatusIdle",
+    "GameStatusRunning",
+    "FullStateResponse",
     "CreateObj",
     "MoveObj"
 ];
@@ -137,11 +149,13 @@ pub fn enum_name_prefab_kind(e: PrefabKind) -> &'static str {
   ENUM_NAMES_PREFAB_KIND[index as usize]
 }
 
-// struct EmptyPackage, aligned to 2
-#[repr(C, align(2))]
+// struct EmptyPackage, aligned to 4
+#[repr(C, align(4))]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct EmptyPackage {
   kind_: ResponseKind,
+  padding0__: u16,
+  ordering_: u32,
 } // pub struct EmptyPackage
 impl flatbuffers::SafeSliceAccess for EmptyPackage {}
 impl<'a> flatbuffers::Follow<'a> for EmptyPackage {
@@ -182,14 +196,19 @@ impl<'b> flatbuffers::Push for &'b EmptyPackage {
 
 
 impl EmptyPackage {
-  pub fn new<'a>(_kind: ResponseKind) -> Self {
+  pub fn new<'a>(_kind: ResponseKind, _ordering: u32) -> Self {
     EmptyPackage {
       kind_: _kind.to_little_endian(),
+      ordering_: _ordering.to_little_endian(),
 
+      padding0__: 0,
     }
   }
   pub fn kind<'a>(&'a self) -> ResponseKind {
     self.kind_.from_little_endian()
+  }
+  pub fn ordering<'a>(&'a self) -> u32 {
+    self.ordering_.from_little_endian()
   }
 }
 
@@ -197,6 +216,9 @@ impl EmptyPackage {
 #[repr(C, align(4))]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct IdPackage {
+  kind_: ResponseKind,
+  padding0__: u16,
+  ordering_: u32,
   id_: u32,
 } // pub struct IdPackage
 impl flatbuffers::SafeSliceAccess for IdPackage {}
@@ -238,11 +260,20 @@ impl<'b> flatbuffers::Push for &'b IdPackage {
 
 
 impl IdPackage {
-  pub fn new<'a>(_id: u32) -> Self {
+  pub fn new<'a>(_kind: ResponseKind, _ordering: u32, _id: u32) -> Self {
     IdPackage {
+      kind_: _kind.to_little_endian(),
+      ordering_: _ordering.to_little_endian(),
       id_: _id.to_little_endian(),
 
+      padding0__: 0,
     }
+  }
+  pub fn kind<'a>(&'a self) -> ResponseKind {
+    self.kind_.from_little_endian()
+  }
+  pub fn ordering<'a>(&'a self) -> u32 {
+    self.ordering_.from_little_endian()
   }
   pub fn id<'a>(&'a self) -> u32 {
     self.id_.from_little_endian()
@@ -253,9 +284,12 @@ impl IdPackage {
 #[repr(C, align(4))]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct CreatePackage {
+  kind_: ResponseKind,
+  padding0__: u16,
+  ordering_: u32,
   id_: u32,
   prefab_: PrefabKind,
-  padding0__: u16,
+  padding1__: u16,
   x_: f32,
   y_: f32,
 } // pub struct CreatePackage
@@ -298,15 +332,24 @@ impl<'b> flatbuffers::Push for &'b CreatePackage {
 
 
 impl CreatePackage {
-  pub fn new<'a>(_id: u32, _prefab: PrefabKind, _x: f32, _y: f32) -> Self {
+  pub fn new<'a>(_kind: ResponseKind, _ordering: u32, _id: u32, _prefab: PrefabKind, _x: f32, _y: f32) -> Self {
     CreatePackage {
+      kind_: _kind.to_little_endian(),
+      ordering_: _ordering.to_little_endian(),
       id_: _id.to_little_endian(),
       prefab_: _prefab.to_little_endian(),
       x_: _x.to_little_endian(),
       y_: _y.to_little_endian(),
 
       padding0__: 0,
+      padding1__: 0,
     }
+  }
+  pub fn kind<'a>(&'a self) -> ResponseKind {
+    self.kind_.from_little_endian()
+  }
+  pub fn ordering<'a>(&'a self) -> u32 {
+    self.ordering_.from_little_endian()
   }
   pub fn id<'a>(&'a self) -> u32 {
     self.id_.from_little_endian()
@@ -326,6 +369,9 @@ impl CreatePackage {
 #[repr(C, align(4))]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct PosPackage {
+  kind_: ResponseKind,
+  padding0__: u16,
+  ordering_: u32,
   id_: u32,
   x_: f32,
   y_: f32,
@@ -369,13 +415,22 @@ impl<'b> flatbuffers::Push for &'b PosPackage {
 
 
 impl PosPackage {
-  pub fn new<'a>(_id: u32, _x: f32, _y: f32) -> Self {
+  pub fn new<'a>(_kind: ResponseKind, _ordering: u32, _id: u32, _x: f32, _y: f32) -> Self {
     PosPackage {
+      kind_: _kind.to_little_endian(),
+      ordering_: _ordering.to_little_endian(),
       id_: _id.to_little_endian(),
       x_: _x.to_little_endian(),
       y_: _y.to_little_endian(),
 
+      padding0__: 0,
     }
+  }
+  pub fn kind<'a>(&'a self) -> ResponseKind {
+    self.kind_.from_little_endian()
+  }
+  pub fn ordering<'a>(&'a self) -> u32 {
+    self.ordering_.from_little_endian()
   }
   pub fn id<'a>(&'a self) -> u32 {
     self.id_.from_little_endian()
@@ -392,6 +447,9 @@ impl PosPackage {
 #[repr(C, align(4))]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct V2Package {
+  kind_: ResponseKind,
+  padding0__: u16,
+  ordering_: u32,
   x_: f32,
   y_: f32,
 } // pub struct V2Package
@@ -434,12 +492,21 @@ impl<'b> flatbuffers::Push for &'b V2Package {
 
 
 impl V2Package {
-  pub fn new<'a>(_x: f32, _y: f32) -> Self {
+  pub fn new<'a>(_kind: ResponseKind, _ordering: u32, _x: f32, _y: f32) -> Self {
     V2Package {
+      kind_: _kind.to_little_endian(),
+      ordering_: _ordering.to_little_endian(),
       x_: _x.to_little_endian(),
       y_: _y.to_little_endian(),
 
+      padding0__: 0,
     }
+  }
+  pub fn kind<'a>(&'a self) -> ResponseKind {
+    self.kind_.from_little_endian()
+  }
+  pub fn ordering<'a>(&'a self) -> u32 {
+    self.ordering_.from_little_endian()
   }
   pub fn x<'a>(&'a self) -> f32 {
     self.x_.from_little_endian()
@@ -479,11 +546,23 @@ impl<'a> StringPackage<'a> {
         args: &'args StringPackageArgs<'args>) -> flatbuffers::WIPOffset<StringPackage<'bldr>> {
       let mut builder = StringPackageBuilder::new(_fbb);
       if let Some(x) = args.buffer { builder.add_buffer(x); }
+      builder.add_ordering(args.ordering);
+      builder.add_kind(args.kind);
       builder.finish()
     }
 
-    pub const VT_BUFFER: flatbuffers::VOffsetT = 4;
+    pub const VT_KIND: flatbuffers::VOffsetT = 4;
+    pub const VT_ORDERING: flatbuffers::VOffsetT = 6;
+    pub const VT_BUFFER: flatbuffers::VOffsetT = 8;
 
+  #[inline]
+  pub fn kind(&self) -> ResponseKind {
+    self._tab.get::<ResponseKind>(StringPackage::VT_KIND, Some(ResponseKind::GameStarted)).unwrap()
+  }
+  #[inline]
+  pub fn ordering(&self) -> u32 {
+    self._tab.get::<u32>(StringPackage::VT_ORDERING, Some(0)).unwrap()
+  }
   #[inline]
   pub fn buffer(&self) -> Option<&'a str> {
     self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(StringPackage::VT_BUFFER, None)
@@ -491,12 +570,16 @@ impl<'a> StringPackage<'a> {
 }
 
 pub struct StringPackageArgs<'a> {
+    pub kind: ResponseKind,
+    pub ordering: u32,
     pub buffer: Option<flatbuffers::WIPOffset<&'a  str>>,
 }
 impl<'a> Default for StringPackageArgs<'a> {
     #[inline]
     fn default() -> Self {
         StringPackageArgs {
+            kind: ResponseKind::GameStarted,
+            ordering: 0,
             buffer: None,
         }
     }
@@ -506,6 +589,14 @@ pub struct StringPackageBuilder<'a: 'b, 'b> {
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b> StringPackageBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_kind(&mut self, kind: ResponseKind) {
+    self.fbb_.push_slot::<ResponseKind>(StringPackage::VT_KIND, kind, ResponseKind::GameStarted);
+  }
+  #[inline]
+  pub fn add_ordering(&mut self, ordering: u32) {
+    self.fbb_.push_slot::<u32>(StringPackage::VT_ORDERING, ordering, 0);
+  }
   #[inline]
   pub fn add_buffer(&mut self, buffer: flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StringPackage::VT_BUFFER, buffer);
@@ -555,11 +646,23 @@ impl<'a> BytesPackage<'a> {
         args: &'args BytesPackageArgs<'args>) -> flatbuffers::WIPOffset<BytesPackage<'bldr>> {
       let mut builder = BytesPackageBuilder::new(_fbb);
       if let Some(x) = args.buffer { builder.add_buffer(x); }
+      builder.add_ordering(args.ordering);
+      builder.add_kind(args.kind);
       builder.finish()
     }
 
-    pub const VT_BUFFER: flatbuffers::VOffsetT = 4;
+    pub const VT_KIND: flatbuffers::VOffsetT = 4;
+    pub const VT_ORDERING: flatbuffers::VOffsetT = 6;
+    pub const VT_BUFFER: flatbuffers::VOffsetT = 8;
 
+  #[inline]
+  pub fn kind(&self) -> ResponseKind {
+    self._tab.get::<ResponseKind>(BytesPackage::VT_KIND, Some(ResponseKind::GameStarted)).unwrap()
+  }
+  #[inline]
+  pub fn ordering(&self) -> u32 {
+    self._tab.get::<u32>(BytesPackage::VT_ORDERING, Some(0)).unwrap()
+  }
   #[inline]
   pub fn buffer(&self) -> Option<&'a [i8]> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<'a, i8>>>(BytesPackage::VT_BUFFER, None).map(|v| v.safe_slice())
@@ -567,12 +670,16 @@ impl<'a> BytesPackage<'a> {
 }
 
 pub struct BytesPackageArgs<'a> {
+    pub kind: ResponseKind,
+    pub ordering: u32,
     pub buffer: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a ,  i8>>>,
 }
 impl<'a> Default for BytesPackageArgs<'a> {
     #[inline]
     fn default() -> Self {
         BytesPackageArgs {
+            kind: ResponseKind::GameStarted,
+            ordering: 0,
             buffer: None,
         }
     }
@@ -582,6 +689,14 @@ pub struct BytesPackageBuilder<'a: 'b, 'b> {
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b> BytesPackageBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_kind(&mut self, kind: ResponseKind) {
+    self.fbb_.push_slot::<ResponseKind>(BytesPackage::VT_KIND, kind, ResponseKind::GameStarted);
+  }
+  #[inline]
+  pub fn add_ordering(&mut self, ordering: u32) {
+    self.fbb_.push_slot::<u32>(BytesPackage::VT_ORDERING, ordering, 0);
+  }
   #[inline]
   pub fn add_buffer(&mut self, buffer: flatbuffers::WIPOffset<flatbuffers::Vector<'b , i8>>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(BytesPackage::VT_BUFFER, buffer);
@@ -630,42 +745,50 @@ impl<'a> Responses<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args ResponsesArgs<'args>) -> flatbuffers::WIPOffset<Responses<'bldr>> {
       let mut builder = ResponsesBuilder::new(_fbb);
-      if let Some(x) = args.move_obj { builder.add_move_obj(x); }
-      if let Some(x) = args.create_object { builder.add_create_object(x); }
-      if let Some(x) = args.simple { builder.add_simple(x); }
+      if let Some(x) = args.pos_packages { builder.add_pos_packages(x); }
+      if let Some(x) = args.create_packages { builder.add_create_packages(x); }
+      if let Some(x) = args.empty_packages { builder.add_empty_packages(x); }
+      builder.add_total_messages(args.total_messages);
       builder.finish()
     }
 
-    pub const VT_SIMPLE: flatbuffers::VOffsetT = 4;
-    pub const VT_CREATE_OBJECT: flatbuffers::VOffsetT = 6;
-    pub const VT_MOVE_OBJ: flatbuffers::VOffsetT = 8;
+    pub const VT_TOTAL_MESSAGES: flatbuffers::VOffsetT = 4;
+    pub const VT_EMPTY_PACKAGES: flatbuffers::VOffsetT = 6;
+    pub const VT_CREATE_PACKAGES: flatbuffers::VOffsetT = 8;
+    pub const VT_POS_PACKAGES: flatbuffers::VOffsetT = 10;
 
   #[inline]
-  pub fn simple(&self) -> Option<&'a [EmptyPackage]> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<EmptyPackage>>>(Responses::VT_SIMPLE, None).map(|v| v.safe_slice() )
+  pub fn total_messages(&self) -> u32 {
+    self._tab.get::<u32>(Responses::VT_TOTAL_MESSAGES, Some(0)).unwrap()
   }
   #[inline]
-  pub fn create_object(&self) -> Option<&'a [CreatePackage]> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<CreatePackage>>>(Responses::VT_CREATE_OBJECT, None).map(|v| v.safe_slice() )
+  pub fn empty_packages(&self) -> Option<&'a [EmptyPackage]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<EmptyPackage>>>(Responses::VT_EMPTY_PACKAGES, None).map(|v| v.safe_slice() )
   }
   #[inline]
-  pub fn move_obj(&self) -> Option<&'a [PosPackage]> {
-    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<PosPackage>>>(Responses::VT_MOVE_OBJ, None).map(|v| v.safe_slice() )
+  pub fn create_packages(&self) -> Option<&'a [CreatePackage]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<CreatePackage>>>(Responses::VT_CREATE_PACKAGES, None).map(|v| v.safe_slice() )
+  }
+  #[inline]
+  pub fn pos_packages(&self) -> Option<&'a [PosPackage]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<PosPackage>>>(Responses::VT_POS_PACKAGES, None).map(|v| v.safe_slice() )
   }
 }
 
 pub struct ResponsesArgs<'a> {
-    pub simple: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , EmptyPackage>>>,
-    pub create_object: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , CreatePackage>>>,
-    pub move_obj: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , PosPackage>>>,
+    pub total_messages: u32,
+    pub empty_packages: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , EmptyPackage>>>,
+    pub create_packages: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , CreatePackage>>>,
+    pub pos_packages: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , PosPackage>>>,
 }
 impl<'a> Default for ResponsesArgs<'a> {
     #[inline]
     fn default() -> Self {
         ResponsesArgs {
-            simple: None,
-            create_object: None,
-            move_obj: None,
+            total_messages: 0,
+            empty_packages: None,
+            create_packages: None,
+            pos_packages: None,
         }
     }
 }
@@ -675,16 +798,20 @@ pub struct ResponsesBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> ResponsesBuilder<'a, 'b> {
   #[inline]
-  pub fn add_simple(&mut self, simple: flatbuffers::WIPOffset<flatbuffers::Vector<'b , EmptyPackage>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Responses::VT_SIMPLE, simple);
+  pub fn add_total_messages(&mut self, total_messages: u32) {
+    self.fbb_.push_slot::<u32>(Responses::VT_TOTAL_MESSAGES, total_messages, 0);
   }
   #[inline]
-  pub fn add_create_object(&mut self, create_object: flatbuffers::WIPOffset<flatbuffers::Vector<'b , CreatePackage>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Responses::VT_CREATE_OBJECT, create_object);
+  pub fn add_empty_packages(&mut self, empty_packages: flatbuffers::WIPOffset<flatbuffers::Vector<'b , EmptyPackage>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Responses::VT_EMPTY_PACKAGES, empty_packages);
   }
   #[inline]
-  pub fn add_move_obj(&mut self, move_obj: flatbuffers::WIPOffset<flatbuffers::Vector<'b , PosPackage>>) {
-    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Responses::VT_MOVE_OBJ, move_obj);
+  pub fn add_create_packages(&mut self, create_packages: flatbuffers::WIPOffset<flatbuffers::Vector<'b , CreatePackage>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Responses::VT_CREATE_PACKAGES, create_packages);
+  }
+  #[inline]
+  pub fn add_pos_packages(&mut self, pos_packages: flatbuffers::WIPOffset<flatbuffers::Vector<'b , PosPackage>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Responses::VT_POS_PACKAGES, pos_packages);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> ResponsesBuilder<'a, 'b> {

@@ -1,24 +1,35 @@
 namespace FfiRequests;
 
 enum RequestKind : ushort {
+    // request game status, expected GameStatusIdle or GameStatusRunning
+    GameStatus = 0,
+    // Init a new game, expect GameStarted and FullStateResponse
+    StartGame,
+    // Expect FullStateResponse
+    GetAll,
 	SetInputAxis,
 }
 
 struct EmptyPackage {
     kind: RequestKind;
+    ordering: uint;
 }
 
 struct V2Package {
+    kind: RequestKind;
+    ordering: uint;
     x: float32;
     y: float32;
 }
 
 table StringPackage {
-   buffer: string;
+    kind: RequestKind;
+    ordering: uint;
+    buffer: string;
 }
 
 table Requests {
-    axis: V2Package;
+    total_messages: uint;
+    empty_packages: [EmptyPackage];
+    v2_packages: [V2Package];
 }
-
-

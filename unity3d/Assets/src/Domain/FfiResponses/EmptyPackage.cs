@@ -16,9 +16,12 @@ public struct EmptyPackage : IFlatbufferObject
   public EmptyPackage __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public FfiResponses.ResponseKind Kind { get { return (FfiResponses.ResponseKind)__p.bb.GetUshort(__p.bb_pos + 0); } }
+  public uint Ordering { get { return __p.bb.GetUint(__p.bb_pos + 4); } }
 
-  public static Offset<FfiResponses.EmptyPackage> CreateEmptyPackage(FlatBufferBuilder builder, FfiResponses.ResponseKind Kind) {
-    builder.Prep(2, 2);
+  public static Offset<FfiResponses.EmptyPackage> CreateEmptyPackage(FlatBufferBuilder builder, FfiResponses.ResponseKind Kind, uint Ordering) {
+    builder.Prep(4, 8);
+    builder.PutUint(Ordering);
+    builder.Pad(2);
     builder.PutUshort((ushort)Kind);
     return new Offset<FfiResponses.EmptyPackage>(builder.Offset);
   }

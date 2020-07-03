@@ -3,16 +3,48 @@ using UnityEngine;
 
 namespace Domain
 {
+    
     /// <summary>
     /// Messages send to the game
     /// </summary>
     public interface IRequest {}
 
+    public class RequestStartNewGame : IRequest
+    {
+        
+    }
+    
+    public class RequestFullState : IRequest {}
+    
+    public class RequestGameStatus: IRequest {}
+    
+    
     /// <summary>
     /// Messages received from the game
     /// </summary>
     public interface IResponse
     {
+    }
+
+    public class ResponseGameStart : IResponse
+    {
+        
+    }
+
+    public class ResponseGameStatus: IResponse
+    {
+        public enum GameStatus
+        {
+            Idle,
+            Playing
+        }
+        
+        public GameStatus status;
+    }
+    
+    public class ResponseFullState: IResponse
+    {
+        
     }
 
     public class ResponseSpawn : IResponse
@@ -34,6 +66,6 @@ namespace Domain
     /// </summary>
     public interface IDomain
     {
-        List<IResponse> Execute();
+        List<IResponse> Execute(List<IRequest> requests);
     }
 }

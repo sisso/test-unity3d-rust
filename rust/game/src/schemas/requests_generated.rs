@@ -21,12 +21,15 @@ pub mod ffi_requests {
 #[repr(u16)]
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
 pub enum RequestKind {
-  SetInputAxis = 0,
+  GameStatus = 0,
+  StartGame = 1,
+  GetAll = 2,
+  SetInputAxis = 3,
 
 }
 
 const ENUM_MIN_REQUEST_KIND: u16 = 0;
-const ENUM_MAX_REQUEST_KIND: u16 = 0;
+const ENUM_MAX_REQUEST_KIND: u16 = 3;
 
 impl<'a> flatbuffers::Follow<'a> for RequestKind {
   type Inner = Self;
@@ -60,12 +63,18 @@ impl flatbuffers::Push for RequestKind {
 }
 
 #[allow(non_camel_case_types)]
-const ENUM_VALUES_REQUEST_KIND:[RequestKind; 1] = [
+const ENUM_VALUES_REQUEST_KIND:[RequestKind; 4] = [
+  RequestKind::GameStatus,
+  RequestKind::StartGame,
+  RequestKind::GetAll,
   RequestKind::SetInputAxis
 ];
 
 #[allow(non_camel_case_types)]
-const ENUM_NAMES_REQUEST_KIND:[&'static str; 1] = [
+const ENUM_NAMES_REQUEST_KIND:[&'static str; 4] = [
+    "GameStatus",
+    "StartGame",
+    "GetAll",
     "SetInputAxis"
 ];
 
@@ -74,11 +83,13 @@ pub fn enum_name_request_kind(e: RequestKind) -> &'static str {
   ENUM_NAMES_REQUEST_KIND[index as usize]
 }
 
-// struct EmptyPackage, aligned to 2
-#[repr(C, align(2))]
+// struct EmptyPackage, aligned to 4
+#[repr(C, align(4))]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct EmptyPackage {
   kind_: RequestKind,
+  padding0__: u16,
+  ordering_: u32,
 } // pub struct EmptyPackage
 impl flatbuffers::SafeSliceAccess for EmptyPackage {}
 impl<'a> flatbuffers::Follow<'a> for EmptyPackage {
@@ -119,14 +130,19 @@ impl<'b> flatbuffers::Push for &'b EmptyPackage {
 
 
 impl EmptyPackage {
-  pub fn new<'a>(_kind: RequestKind) -> Self {
+  pub fn new<'a>(_kind: RequestKind, _ordering: u32) -> Self {
     EmptyPackage {
       kind_: _kind.to_little_endian(),
+      ordering_: _ordering.to_little_endian(),
 
+      padding0__: 0,
     }
   }
   pub fn kind<'a>(&'a self) -> RequestKind {
     self.kind_.from_little_endian()
+  }
+  pub fn ordering<'a>(&'a self) -> u32 {
+    self.ordering_.from_little_endian()
   }
 }
 
@@ -134,6 +150,9 @@ impl EmptyPackage {
 #[repr(C, align(4))]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct V2Package {
+  kind_: RequestKind,
+  padding0__: u16,
+  ordering_: u32,
   x_: f32,
   y_: f32,
 } // pub struct V2Package
@@ -176,12 +195,21 @@ impl<'b> flatbuffers::Push for &'b V2Package {
 
 
 impl V2Package {
-  pub fn new<'a>(_x: f32, _y: f32) -> Self {
+  pub fn new<'a>(_kind: RequestKind, _ordering: u32, _x: f32, _y: f32) -> Self {
     V2Package {
+      kind_: _kind.to_little_endian(),
+      ordering_: _ordering.to_little_endian(),
       x_: _x.to_little_endian(),
       y_: _y.to_little_endian(),
 
+      padding0__: 0,
     }
+  }
+  pub fn kind<'a>(&'a self) -> RequestKind {
+    self.kind_.from_little_endian()
+  }
+  pub fn ordering<'a>(&'a self) -> u32 {
+    self.ordering_.from_little_endian()
   }
   pub fn x<'a>(&'a self) -> f32 {
     self.x_.from_little_endian()
@@ -221,11 +249,23 @@ impl<'a> StringPackage<'a> {
         args: &'args StringPackageArgs<'args>) -> flatbuffers::WIPOffset<StringPackage<'bldr>> {
       let mut builder = StringPackageBuilder::new(_fbb);
       if let Some(x) = args.buffer { builder.add_buffer(x); }
+      builder.add_ordering(args.ordering);
+      builder.add_kind(args.kind);
       builder.finish()
     }
 
-    pub const VT_BUFFER: flatbuffers::VOffsetT = 4;
+    pub const VT_KIND: flatbuffers::VOffsetT = 4;
+    pub const VT_ORDERING: flatbuffers::VOffsetT = 6;
+    pub const VT_BUFFER: flatbuffers::VOffsetT = 8;
 
+  #[inline]
+  pub fn kind(&self) -> RequestKind {
+    self._tab.get::<RequestKind>(StringPackage::VT_KIND, Some(RequestKind::GameStatus)).unwrap()
+  }
+  #[inline]
+  pub fn ordering(&self) -> u32 {
+    self._tab.get::<u32>(StringPackage::VT_ORDERING, Some(0)).unwrap()
+  }
   #[inline]
   pub fn buffer(&self) -> Option<&'a str> {
     self._tab.get::<flatbuffers::ForwardsUOffset<&str>>(StringPackage::VT_BUFFER, None)
@@ -233,12 +273,16 @@ impl<'a> StringPackage<'a> {
 }
 
 pub struct StringPackageArgs<'a> {
+    pub kind: RequestKind,
+    pub ordering: u32,
     pub buffer: Option<flatbuffers::WIPOffset<&'a  str>>,
 }
 impl<'a> Default for StringPackageArgs<'a> {
     #[inline]
     fn default() -> Self {
         StringPackageArgs {
+            kind: RequestKind::GameStatus,
+            ordering: 0,
             buffer: None,
         }
     }
@@ -248,6 +292,14 @@ pub struct StringPackageBuilder<'a: 'b, 'b> {
   start_: flatbuffers::WIPOffset<flatbuffers::TableUnfinishedWIPOffset>,
 }
 impl<'a: 'b, 'b> StringPackageBuilder<'a, 'b> {
+  #[inline]
+  pub fn add_kind(&mut self, kind: RequestKind) {
+    self.fbb_.push_slot::<RequestKind>(StringPackage::VT_KIND, kind, RequestKind::GameStatus);
+  }
+  #[inline]
+  pub fn add_ordering(&mut self, ordering: u32) {
+    self.fbb_.push_slot::<u32>(StringPackage::VT_ORDERING, ordering, 0);
+  }
   #[inline]
   pub fn add_buffer(&mut self, buffer: flatbuffers::WIPOffset<&'b  str>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(StringPackage::VT_BUFFER, buffer);
@@ -296,26 +348,42 @@ impl<'a> Requests<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args RequestsArgs<'args>) -> flatbuffers::WIPOffset<Requests<'bldr>> {
       let mut builder = RequestsBuilder::new(_fbb);
-      if let Some(x) = args.axis { builder.add_axis(x); }
+      if let Some(x) = args.v2_packages { builder.add_v2_packages(x); }
+      if let Some(x) = args.empty_packages { builder.add_empty_packages(x); }
+      builder.add_total_messages(args.total_messages);
       builder.finish()
     }
 
-    pub const VT_AXIS: flatbuffers::VOffsetT = 4;
+    pub const VT_TOTAL_MESSAGES: flatbuffers::VOffsetT = 4;
+    pub const VT_EMPTY_PACKAGES: flatbuffers::VOffsetT = 6;
+    pub const VT_V2_PACKAGES: flatbuffers::VOffsetT = 8;
 
   #[inline]
-  pub fn axis(&self) -> Option<&'a V2Package> {
-    self._tab.get::<V2Package>(Requests::VT_AXIS, None)
+  pub fn total_messages(&self) -> u32 {
+    self._tab.get::<u32>(Requests::VT_TOTAL_MESSAGES, Some(0)).unwrap()
+  }
+  #[inline]
+  pub fn empty_packages(&self) -> Option<&'a [EmptyPackage]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<EmptyPackage>>>(Requests::VT_EMPTY_PACKAGES, None).map(|v| v.safe_slice() )
+  }
+  #[inline]
+  pub fn v2_packages(&self) -> Option<&'a [V2Package]> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<V2Package>>>(Requests::VT_V2_PACKAGES, None).map(|v| v.safe_slice() )
   }
 }
 
 pub struct RequestsArgs<'a> {
-    pub axis: Option<&'a  V2Package>,
+    pub total_messages: u32,
+    pub empty_packages: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , EmptyPackage>>>,
+    pub v2_packages: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , V2Package>>>,
 }
 impl<'a> Default for RequestsArgs<'a> {
     #[inline]
     fn default() -> Self {
         RequestsArgs {
-            axis: None,
+            total_messages: 0,
+            empty_packages: None,
+            v2_packages: None,
         }
     }
 }
@@ -325,8 +393,16 @@ pub struct RequestsBuilder<'a: 'b, 'b> {
 }
 impl<'a: 'b, 'b> RequestsBuilder<'a, 'b> {
   #[inline]
-  pub fn add_axis(&mut self, axis: &'b  V2Package) {
-    self.fbb_.push_slot_always::<&V2Package>(Requests::VT_AXIS, axis);
+  pub fn add_total_messages(&mut self, total_messages: u32) {
+    self.fbb_.push_slot::<u32>(Requests::VT_TOTAL_MESSAGES, total_messages, 0);
+  }
+  #[inline]
+  pub fn add_empty_packages(&mut self, empty_packages: flatbuffers::WIPOffset<flatbuffers::Vector<'b , EmptyPackage>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Requests::VT_EMPTY_PACKAGES, empty_packages);
+  }
+  #[inline]
+  pub fn add_v2_packages(&mut self, v2_packages: flatbuffers::WIPOffset<flatbuffers::Vector<'b , V2Package>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Requests::VT_V2_PACKAGES, v2_packages);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> RequestsBuilder<'a, 'b> {
