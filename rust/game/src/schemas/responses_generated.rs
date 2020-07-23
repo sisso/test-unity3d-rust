@@ -27,11 +27,12 @@ pub enum ResponseKind {
   FullStateResponse = 3,
   CreateObj = 4,
   MoveObj = 5,
+  InvalidRequest = 6,
 
 }
 
 const ENUM_MIN_RESPONSE_KIND: u16 = 0;
-const ENUM_MAX_RESPONSE_KIND: u16 = 5;
+const ENUM_MAX_RESPONSE_KIND: u16 = 6;
 
 impl<'a> flatbuffers::Follow<'a> for ResponseKind {
   type Inner = Self;
@@ -65,23 +66,25 @@ impl flatbuffers::Push for ResponseKind {
 }
 
 #[allow(non_camel_case_types)]
-const ENUM_VALUES_RESPONSE_KIND:[ResponseKind; 6] = [
+const ENUM_VALUES_RESPONSE_KIND:[ResponseKind; 7] = [
   ResponseKind::GameStarted,
   ResponseKind::GameStatusIdle,
   ResponseKind::GameStatusRunning,
   ResponseKind::FullStateResponse,
   ResponseKind::CreateObj,
-  ResponseKind::MoveObj
+  ResponseKind::MoveObj,
+  ResponseKind::InvalidRequest
 ];
 
 #[allow(non_camel_case_types)]
-const ENUM_NAMES_RESPONSE_KIND:[&'static str; 6] = [
+const ENUM_NAMES_RESPONSE_KIND:[&'static str; 7] = [
     "GameStarted",
     "GameStatusIdle",
     "GameStatusRunning",
     "FullStateResponse",
     "CreateObj",
-    "MoveObj"
+    "MoveObj",
+    "InvalidRequest"
 ];
 
 pub fn enum_name_response_kind(e: ResponseKind) -> &'static str {
@@ -745,6 +748,7 @@ impl<'a> Responses<'a> {
         _fbb: &'mut_bldr mut flatbuffers::FlatBufferBuilder<'bldr>,
         args: &'args ResponsesArgs<'args>) -> flatbuffers::WIPOffset<Responses<'bldr>> {
       let mut builder = ResponsesBuilder::new(_fbb);
+      if let Some(x) = args.string_packages { builder.add_string_packages(x); }
       if let Some(x) = args.pos_packages { builder.add_pos_packages(x); }
       if let Some(x) = args.create_packages { builder.add_create_packages(x); }
       if let Some(x) = args.empty_packages { builder.add_empty_packages(x); }
@@ -756,6 +760,7 @@ impl<'a> Responses<'a> {
     pub const VT_EMPTY_PACKAGES: flatbuffers::VOffsetT = 6;
     pub const VT_CREATE_PACKAGES: flatbuffers::VOffsetT = 8;
     pub const VT_POS_PACKAGES: flatbuffers::VOffsetT = 10;
+    pub const VT_STRING_PACKAGES: flatbuffers::VOffsetT = 12;
 
   #[inline]
   pub fn total_messages(&self) -> u32 {
@@ -773,6 +778,10 @@ impl<'a> Responses<'a> {
   pub fn pos_packages(&self) -> Option<&'a [PosPackage]> {
     self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<PosPackage>>>(Responses::VT_POS_PACKAGES, None).map(|v| v.safe_slice() )
   }
+  #[inline]
+  pub fn string_packages(&self) -> Option<flatbuffers::Vector<'a, flatbuffers::ForwardsUOffset<StringPackage<'a>>>> {
+    self._tab.get::<flatbuffers::ForwardsUOffset<flatbuffers::Vector<flatbuffers::ForwardsUOffset<StringPackage<'a>>>>>(Responses::VT_STRING_PACKAGES, None)
+  }
 }
 
 pub struct ResponsesArgs<'a> {
@@ -780,6 +789,7 @@ pub struct ResponsesArgs<'a> {
     pub empty_packages: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , EmptyPackage>>>,
     pub create_packages: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , CreatePackage>>>,
     pub pos_packages: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , PosPackage>>>,
+    pub string_packages: Option<flatbuffers::WIPOffset<flatbuffers::Vector<'a , flatbuffers::ForwardsUOffset<StringPackage<'a >>>>>,
 }
 impl<'a> Default for ResponsesArgs<'a> {
     #[inline]
@@ -789,6 +799,7 @@ impl<'a> Default for ResponsesArgs<'a> {
             empty_packages: None,
             create_packages: None,
             pos_packages: None,
+            string_packages: None,
         }
     }
 }
@@ -812,6 +823,10 @@ impl<'a: 'b, 'b> ResponsesBuilder<'a, 'b> {
   #[inline]
   pub fn add_pos_packages(&mut self, pos_packages: flatbuffers::WIPOffset<flatbuffers::Vector<'b , PosPackage>>) {
     self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Responses::VT_POS_PACKAGES, pos_packages);
+  }
+  #[inline]
+  pub fn add_string_packages(&mut self, string_packages: flatbuffers::WIPOffset<flatbuffers::Vector<'b , flatbuffers::ForwardsUOffset<StringPackage<'b >>>>) {
+    self.fbb_.push_slot_always::<flatbuffers::WIPOffset<_>>(Responses::VT_STRING_PACKAGES, string_packages);
   }
   #[inline]
   pub fn new(_fbb: &'b mut flatbuffers::FlatBufferBuilder<'a>) -> ResponsesBuilder<'a, 'b> {

@@ -1,0 +1,6 @@
+namespace FfiPackages;
+
+enum PackageKind : ushort {
+    Request = 0,
+    Response,
+}

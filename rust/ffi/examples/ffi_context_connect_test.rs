@@ -6,14 +6,14 @@ fn main() {
 
     loop {
         match ffi_context.take() {
-            Ok(Some(bytes)) => {
+            Ok(Some((kind, bytes))) => {
                 let bytes_b64 = base64::encode(bytes);
-                println!("receive {:?}", bytes_b64);
-            },
+                println!("receive {:?}: {:?}", kind, bytes_b64);
+            }
 
             Ok(None) => {
                 println!("receive none");
-            },
+            }
 
             Err(e) => {
                 eprintln!("receive error {:?}", e);

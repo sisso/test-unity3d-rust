@@ -4,7 +4,8 @@ use crate::client::Client;
 use crate::game::GameEvent::CreateObj;
 use crate::game::{Game, GameEvent, Result, UserId};
 use flatbuffers::FlatBufferBuilder;
-use game::schemas::{ffi_requests, ffi_responses, RawMsg, RawMsgBuffer};
+use game::packages::package_buffer::Package;
+use game::schemas::{ffi_requests, ffi_responses, PackageKind, RawMsg, RawMsgBuffer};
 use game::Error;
 
 #[derive(Debug)]
@@ -32,10 +33,10 @@ impl<'a> FfiContext {
         FfiContext { mode }
     }
 
-    pub fn push(&mut self, bytes: &RawMsg) -> Result<()> {
+    pub fn push(&mut self, package_kind: PackageKind, bytes: &RawMsg) -> Result<()> {
         match &mut self.mode {
             RunMode::Embedded { game } => {
-                let requests = game::schemas::parse_game_requests(bytes)?;
+                let requests = game::schemas::parse_game_requests(package_kind, bytes)?;
                 debug!("ffi receive requests: {:?}", requests);
                 game.handle_requests(requests)
             }
@@ -45,12 +46,12 @@ impl<'a> FfiContext {
     }
 
     // TODO: receive a closure?
-    pub fn take(&mut self) -> Result<Option<RawMsgBuffer>> {
+    pub fn take(&mut self) -> Result<Option<(PackageKind, RawMsgBuffer)>> {
         match &mut self.mode {
             RunMode::Embedded { game } => {
                 let game_responses = game.take()?;
                 debug!("ffi returning responses: {:?}", game_responses);
-                game::schemas::serialize_game_events(game_responses).map(|bytes| Some(bytes))
+                game::schemas::serialize_game_events(game_responses).map(Option::from)
             }
 
             RunMode::Server { client } => client.take_responses(),

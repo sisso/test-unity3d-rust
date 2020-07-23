@@ -25,13 +25,17 @@ public struct Responses : IFlatbufferObject
   public int CreatePackagesLength { get { int o = __p.__offset(8); return o != 0 ? __p.__vector_len(o) : 0; } }
   public FfiResponses.PosPackage? PosPackages(int j) { int o = __p.__offset(10); return o != 0 ? (FfiResponses.PosPackage?)(new FfiResponses.PosPackage()).__assign(__p.__vector(o) + j * 20, __p.bb) : null; }
   public int PosPackagesLength { get { int o = __p.__offset(10); return o != 0 ? __p.__vector_len(o) : 0; } }
+  public FfiResponses.StringPackage? StringPackages(int j) { int o = __p.__offset(12); return o != 0 ? (FfiResponses.StringPackage?)(new FfiResponses.StringPackage()).__assign(__p.__indirect(__p.__vector(o) + j * 4), __p.bb) : null; }
+  public int StringPackagesLength { get { int o = __p.__offset(12); return o != 0 ? __p.__vector_len(o) : 0; } }
 
   public static Offset<FfiResponses.Responses> CreateResponses(FlatBufferBuilder builder,
       uint total_messages = 0,
       VectorOffset empty_packagesOffset = default(VectorOffset),
       VectorOffset create_packagesOffset = default(VectorOffset),
-      VectorOffset pos_packagesOffset = default(VectorOffset)) {
-    builder.StartTable(4);
+      VectorOffset pos_packagesOffset = default(VectorOffset),
+      VectorOffset string_packagesOffset = default(VectorOffset)) {
+    builder.StartTable(5);
+    Responses.AddStringPackages(builder, string_packagesOffset);
     Responses.AddPosPackages(builder, pos_packagesOffset);
     Responses.AddCreatePackages(builder, create_packagesOffset);
     Responses.AddEmptyPackages(builder, empty_packagesOffset);
@@ -39,7 +43,7 @@ public struct Responses : IFlatbufferObject
     return Responses.EndResponses(builder);
   }
 
-  public static void StartResponses(FlatBufferBuilder builder) { builder.StartTable(4); }
+  public static void StartResponses(FlatBufferBuilder builder) { builder.StartTable(5); }
   public static void AddTotalMessages(FlatBufferBuilder builder, uint totalMessages) { builder.AddUint(0, totalMessages, 0); }
   public static void AddEmptyPackages(FlatBufferBuilder builder, VectorOffset emptyPackagesOffset) { builder.AddOffset(1, emptyPackagesOffset.Value, 0); }
   public static void StartEmptyPackagesVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(8, numElems, 4); }
@@ -47,6 +51,10 @@ public struct Responses : IFlatbufferObject
   public static void StartCreatePackagesVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(24, numElems, 4); }
   public static void AddPosPackages(FlatBufferBuilder builder, VectorOffset posPackagesOffset) { builder.AddOffset(3, posPackagesOffset.Value, 0); }
   public static void StartPosPackagesVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(20, numElems, 4); }
+  public static void AddStringPackages(FlatBufferBuilder builder, VectorOffset stringPackagesOffset) { builder.AddOffset(4, stringPackagesOffset.Value, 0); }
+  public static VectorOffset CreateStringPackagesVector(FlatBufferBuilder builder, Offset<FfiResponses.StringPackage>[] data) { builder.StartVector(4, data.Length, 4); for (int i = data.Length - 1; i >= 0; i--) builder.AddOffset(data[i].Value); return builder.EndVector(); }
+  public static VectorOffset CreateStringPackagesVectorBlock(FlatBufferBuilder builder, Offset<FfiResponses.StringPackage>[] data) { builder.StartVector(4, data.Length, 4); builder.Add(data); return builder.EndVector(); }
+  public static void StartStringPackagesVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(4, numElems, 4); }
   public static Offset<FfiResponses.Responses> EndResponses(FlatBufferBuilder builder) {
     int o = builder.EndTable();
     return new Offset<FfiResponses.Responses>(o);

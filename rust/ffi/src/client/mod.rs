@@ -1,8 +1,8 @@
-use game::{schemas::RawMsgBuffer, Error, Result};
 use game::client::SocketClient;
 use game::packages::package_buffer::PackageBuffer;
-use std::io::ErrorKind;
+use game::{schemas::RawMsgBuffer, Error, Result};
 use logs::*;
+use std::io::ErrorKind;
 
 #[derive(Debug)]
 enum State {
@@ -10,7 +10,7 @@ enum State {
     Connected {
         buffer: PackageBuffer,
         socket: SocketClient,
-        queue: Vec<RawMsgBuffer>,
+        queue: Vec<(u16, RawMsgBuffer)>,
     },
 }
 
@@ -38,48 +38,46 @@ impl Client {
                 self.state = State::Connected {
                     buffer: PackageBuffer::new(),
                     socket,
-                    queue: vec![]
+                    queue: vec![],
                 };
 
                 // println!("connected");
-            },
+            }
             _ => {}
         }
 
         Ok(())
     }
 
-    pub fn take_responses(&mut self) -> Result<Option<RawMsgBuffer>> {
+    pub fn take_responses(&mut self) -> Result<Option<(u16, RawMsgBuffer)>> {
         self.check_connection()?;
 
         match &mut self.state {
             State::Connected {
-                buffer, socket, queue
-            } => {
-                match socket.tick() {
-                    Ok(()) => {
-                        if let Some(vec) = socket.take() {
-                            let packages = buffer.push(vec);
-                            queue.extend(packages);
-                        }
+                buffer,
+                socket,
+                queue,
+            } => match socket.tick() {
+                Ok(()) => {
+                    if let Some(vec) = socket.take() {
+                        let packages = buffer.push(vec);
+                        queue.extend(packages);
+                    }
 
-                        if queue.is_empty() {
-                            Ok(None)
-                        } else {
-                            Ok(Some(queue.remove(0)))
-                        }
-                    },
-
-                    Err(e) if e.kind() == std::io::ErrorKind::BrokenPipe=> {
-                        info!("switching to not connected");
-                        self.state = State::NotConnected;
-                        Err(Error::Disconnect)
-                    },
-
-                    Err(e) => {
-                        Err(e.into())
+                    if queue.is_empty() {
+                        Ok(None)
+                    } else {
+                        Ok(Some(queue.remove(0)))
                     }
                 }
+
+                Err(e) if e.kind() == std::io::ErrorKind::BrokenPipe => {
+                    info!("switching to not connected");
+                    self.state = State::NotConnected;
+                    Err(Error::Disconnect)
+                }
+
+                Err(e) => Err(e.into()),
             },
             State::NotConnected => {
                 // TODO: should we do something?

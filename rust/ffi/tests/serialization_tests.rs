@@ -28,6 +28,7 @@ fn test_flatbuffer_schema_serialization() {
                 empty_packages: None,
                 create_packages: None,
                 pos_packages: Some(v),
+                string_packages: None,
             },
         );
 

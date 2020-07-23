@@ -31,10 +31,15 @@ pub extern "C" fn ffi_context_close(ctx: Box<FfiContext>) {
 }
 
 #[no_mangle]
-pub extern "C" fn ffi_context_push(ctx: &mut FfiContext, buffer: *mut u8, length: u32) -> bool {
+pub extern "C" fn ffi_context_push(
+    ctx: &mut FfiContext,
+    package_kind: u16,
+    buffer: *mut u8,
+    length: u32,
+) -> bool {
     let ref_data = to_slice(buffer, length);
-    // debug!("server_ffi_push {:?}: {:?}", ctx.get_control_value(), value);
-    match ctx.push(ref_data) {
+    debug!("ffi_context_push {:?}", package_kind);
+    match ctx.push(package_kind, ref_data) {
         Err(err) => {
             debug!("server_ffi_push fail: {:?}", err);
             false
@@ -46,22 +51,18 @@ pub extern "C" fn ffi_context_push(ctx: &mut FfiContext, buffer: *mut u8, length
 #[no_mangle]
 pub extern "C" fn ffi_context_take(
     ctx: &mut FfiContext,
-    callback: extern "stdcall" fn(*const u8, u32),
+    callback: extern "stdcall" fn(u16, *const u8, u32),
 ) -> bool {
     // debug!("server_ffi_push {:?}: {:?}", ctx.get_control_value(), value);
     match ctx.take() {
-        Ok(Some(buffer)) => {
-            callback(buffer.as_ptr(), buffer.len() as u32);
+        Ok(Some((kind, buffer))) => {
+            callback(kind, buffer.as_ptr(), buffer.len() as u32);
             true
         }
 
-        Ok(None) => {
-            true
-        }
+        Ok(None) => true,
 
-        Err(Error::Disconnect) => {
-            false
-        }
+        Err(Error::Disconnect) => false,
 
         Err(err) => {
             debug!("server_ffi_take fail: {:?}", err);

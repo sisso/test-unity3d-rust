@@ -1,7 +1,7 @@
 #[macro_export]
 macro_rules! log {
     (target: $target:expr, $lvl:expr, $($arg:tt)+) => ({
-        eprintln!("{} - {} - {}",
+        println!("{} - {} - {}",
             $target,
             $lvl,
             format_args!($($arg)*));

@@ -34,8 +34,8 @@ fn main() {
         }
 
         let events = game.take().unwrap();
-        let bytes = game::schemas::serialize_game_events(events).unwrap();
-        let bytes = PackageBuffer::pack(bytes);
+        let (kind, bytes) = game::schemas::serialize_game_events(events).unwrap();
+        let bytes = PackageBuffer::pack((kind, bytes));
 
         for (connection_id, _) in &users {
             server.output(*connection_id, bytes.clone());

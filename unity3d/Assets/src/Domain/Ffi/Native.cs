@@ -18,9 +18,9 @@ namespace Domain.Ffi
         [DllImport("ffi_domain.so", CharSet = CharSet.Unicode)]
         internal static extern void ffi_context_close(IntPtr ptr);
         [DllImport("ffi_domain.so")]
-        internal static extern bool ffi_context_push(ContextHandler ptr, byte[] buffer, UInt32 len);
+        internal static extern bool ffi_context_push(ContextHandler ptr, UInt16 kind, byte[] buffer, UInt32 len);
         [DllImport("ffi_domain.so", CharSet = CharSet.Unicode)]
-        internal static extern bool ffi_context_take(ContextHandler ptr, Action<IntPtr, UInt32> callback);
+        internal static extern bool ffi_context_take(ContextHandler ptr, Action<UInt16, IntPtr, UInt32> callback);
     }
 
     internal class ContextHandler : SafeHandle
@@ -129,8 +129,8 @@ namespace Domain.Ffi
         
         delegate IntPtr CreateContext();
         delegate void CloseContext(IntPtr contextHandle);
-        delegate bool ContextPush(IntPtr contextHandle, byte[] buffer, UInt32 len);
-        delegate bool ContextTake(IntPtr ptr, Action<IntPtr, UInt32> callback);
+        delegate bool ContextPush(IntPtr contextHandle, UInt16 kind, byte[] buffer, UInt32 len);
+        delegate bool ContextTake(IntPtr ptr, Action<UInt16, IntPtr, UInt32> callback);
 
         private CloseContext nativeCloseContext;
         private ContextPush nativeContextPush;
@@ -187,12 +187,12 @@ namespace Domain.Ffi
 #endif
         }
 
-        public void Send(byte[] bytes)
+        public void Send(UInt16 kind, byte[] bytes)
         {
         #if STATIC_BIND
-            var result = Native.ffi_context_push(this.handler, bytes, Convert.ToUInt32(bytes.Length));
+            var result = Native.ffi_context_push(this.handler, kind, bytes, Convert.ToUInt32(bytes.Length));
         #else
-            var result = nativeContextPush(this.contextHandle, bytes, Convert.ToUInt32(bytes.Length));
+            var result = nativeContextPush(this.contextHandle, kind, bytes, Convert.ToUInt32(bytes.Length));
         #endif
             if (!result)
             {
@@ -200,17 +200,17 @@ namespace Domain.Ffi
             }
         }
 
-        public void Execute(Action<byte[]> caller)
+        public void Execute(Action<UInt16, byte[]> caller)
         {
         #if STATIC_BIND
-            var result = Native.ffi_context_take(this.handler, (ptr, length) =>
+            var result = Native.ffi_context_take(this.handler, (kind, ptr, length) =>
             {
-                caller.Invoke(ToByteArray(ptr, length));
+                caller.Invoke(kind, ToByteArray(ptr, length));
             });
         #else
-            var result = nativeContextTake.Invoke(this.contextHandle, (ptr, length) =>
+            var result = nativeContextTake.Invoke(this.contextHandle, (kind, ptr, length) =>
             {
-                caller.Invoke(ToByteArray(ptr, length));
+                caller.Invoke(kind, ToByteArray(ptr, length));
             });
         #endif
             if (!result)

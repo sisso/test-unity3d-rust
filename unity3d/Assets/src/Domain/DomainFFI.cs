@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using FfiPackages;
 using FfiRequests;
 using FfiResponses;
 using FlatBuffers;
 using UnityEditor.Graphs;
 using UnityEngine;
+using UnityEngine.Assertions;
 using UnityEngine.Networking.Match;
 
 namespace Domain
@@ -51,10 +53,11 @@ namespace Domain
         private List<IResponse> GetResponses()
         {
             IResponse[] result = null;
-            ffi.Execute(bytes =>
+            ffi.Execute((kind, bytes) =>
             {
                 // all references to bytes/buffer/response should be released in the end of this scope
-                result = Deserialize(bytes);
+                var packageKind = (PackageKind) kind;
+                result = Deserialize(packageKind, bytes);
             });
 
             if (result == null)
@@ -65,8 +68,13 @@ namespace Domain
             return result.ToList();
         }
 
-        private static IResponse[] Deserialize(byte[] bytes)
+        private static IResponse[] Deserialize(PackageKind kind, byte[] bytes)
         {
+            if (kind != PackageKind.Response)
+            {
+                throw new System.Exception($"Receive unknown package kind {kind}");
+            }
+            
             var buffer = new ByteBuffer(bytes);
             var response = Responses.GetRootAsResponses(buffer);
 
@@ -137,11 +145,11 @@ namespace Domain
 
         private void SendRequests(List<IRequest> requests)
         {
-            var bytes = SerializeRequests(requests);
-            ffi.Send(bytes);
+            var (kind, bytes) = SerializeRequests(requests);
+            ffi.Send(kind, bytes);
         }
         
-        private byte[] SerializeRequests(List<IRequest> requests)
+        private (UInt16, byte[]) SerializeRequests(List<IRequest> requests)
         {
             var buffer = new ByteBuffer(1024);
             var b = new FlatBufferBuilder(buffer);
@@ -191,7 +199,7 @@ namespace Domain
             var requestsAddr = Requests.EndRequests(b);
             b.Finish(requestsAddr.Value);
             
-            return b.SizedByteArray();
+            return ((UInt16) PackageKind.Request, b.SizedByteArray());
         }
     }
 }

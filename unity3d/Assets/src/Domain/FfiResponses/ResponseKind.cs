@@ -13,6 +13,7 @@ public enum ResponseKind : ushort
   FullStateResponse = 3,
   CreateObj = 4,
   MoveObj = 5,
+  InvalidRequest = 6,
 };
 
 

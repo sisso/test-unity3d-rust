@@ -1,3 +1,4 @@
+mod packages_generated;
 mod requests_generated;
 mod responses_generated;
 
@@ -9,8 +10,14 @@ use flatbuffers::FlatBufferBuilder;
 
 pub type RawMsg = [u8];
 pub type RawMsgBuffer = Vec<u8>;
+pub type PackageKind = u16;
 
-pub fn parse_game_requests(requests: &RawMsg) -> Result<Vec<Request>> {
+pub fn parse_game_requests(kind: PackageKind, requests: &RawMsg) -> Result<Vec<Request>> {
+    if kind != packages_generated::ffi_packages::PackageKind::Request as u16 {
+        eprintln!("receive unknown kind {:?}", kind);
+        return Err(Error::Unknown(format!("Unknown kind {}", kind)));
+    }
+
     let root = flatbuffers::get_root::<ffi_requests::Requests>(requests);
 
     let total_requests = root.total_messages() as usize;
@@ -43,7 +50,9 @@ pub fn parse_game_requests(requests: &RawMsg) -> Result<Vec<Request>> {
     }
 }
 
-pub fn serialize_game_events(game_responses: Vec<GameEvent>) -> Result<RawMsgBuffer> {
+pub fn serialize_game_events(
+    game_responses: Vec<GameEvent>,
+) -> Result<(PackageKind, RawMsgBuffer)> {
     // TODO move buffer to context for reuse
     let mut fb = FlatBufferBuilder::new();
 
@@ -61,6 +70,7 @@ pub fn serialize_game_events(game_responses: Vec<GameEvent>) -> Result<RawMsgBuf
     let mut empty_packages = vec![];
     let mut create_packages = vec![];
     let mut pos_packages = vec![];
+    // let mut string_packages = vec![];
 
     let total_game_responses = game_responses.len();
     for responses in game_responses {
@@ -119,11 +129,15 @@ pub fn serialize_game_events(game_responses: Vec<GameEvent>) -> Result<RawMsgBuf
         empty_packages: create_vector!(empty_packages),
         create_packages: create_vector!(create_packages),
         pos_packages: create_vector!(pos_packages),
+        string_packages: None,
     };
 
     let out = ffi_responses::Responses::create(&mut fb, &args);
     fb.finish_minimal(out);
 
     // TODO remove this copy
-    Ok(fb.finished_data().to_vec())
+    Ok((
+        packages_generated::ffi_packages::PackageKind::Response as u16,
+        fb.finished_data().to_vec(),
+    ))
 }
