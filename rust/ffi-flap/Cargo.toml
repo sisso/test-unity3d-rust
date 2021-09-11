@@ -1,0 +1,22 @@
+[package]
+name = "ffi-flap"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "ffi_domain_2"
+crate-type = ["cdylib"]
+
+[build-dependencies]
+# flapigen = "0.6.0-pre7"
+flapigen = { version = "0.6.0-pre8", path = "/home/sisso/work/_others/flapigen-rs/macroslib" }
+env_logger = "0.7"
+
+[dependencies]
+log-panics = "2.0.0"
+log="0.4"
+env_logger = "0.7"
+jni-sys = "0.3.0"
+cpython = { version = "0.3", features = ["extension-module"] }
