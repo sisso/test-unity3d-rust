@@ -641,98 +641,6 @@ public static class TestStaticClass {
         }
     }
         
-    internal static class RustOptionTestClass {
-        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr RustOptionTestClass_new_none();
-
-        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern IntPtr RustOptionTestClass_new_some(/* TestClass */ IntPtr value);
-        
-        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern /* TestClass */ IntPtr RustOptionTestClass_take(IntPtr optPtr);
-
-        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern byte RustOptionTestClass_is_some(IntPtr optPtr);
-
-        internal static Option<TestClass> rust_to_dotnet(IntPtr optPtr)
-        {
-            if (RustOptionTestClass_is_some(optPtr) != 0)
-            {
-                var value_0 = RustOptionTestClass_take(optPtr);
-                var value_1 = new TestClass(value_0);
-                return new Option<TestClass>(value_1);
-            }
-            else
-            {
-                return new Option<TestClass>();
-            }
-        }
-
-        internal static IntPtr dotnet_to_rust(Option<TestClass> opt)
-        {
-            if (opt.IsSome)
-            {
-                var value_0 = opt.Value.nativePtr;
-                return RustOptionTestClass_new_some(value_0);
-            }
-            else
-            {
-                return RustOptionTestClass_new_none();
-            }
-        }
-    }
-    
-    internal static class RustResultVoid {
-
-        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern byte RustResultVoid_is_ok(IntPtr resultPtr);
-
-        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern /* mut c_str_u16 */ IntPtr RustResultVoid_take_err(IntPtr resultPtr);
-
-        internal static void unwrap(IntPtr resultPtr)
-        {
-            if (RustResultVoid_is_ok(resultPtr) != 0)
-            {
-                return;
-            }
-            else
-            {
-                var messagePtr = RustResultVoid_take_err(resultPtr);
-                var message = RustString.rust_to_dotnet(messagePtr);
-                throw new Error(message);
-            }
-        }
-    }
-    
-    internal static class RustResultTestClass {
-
-        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern byte RustResultTestClass_is_ok(IntPtr resultPtr);
-
-        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern /* TestClass */ IntPtr RustResultTestClass_take_ok(IntPtr resultPtr);
-
-        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern /* mut c_str_u16 */ IntPtr RustResultTestClass_take_error(IntPtr resultPtr);
-
-        internal static TestClass unwrap(IntPtr resultPtr)
-        {
-            if (RustResultTestClass_is_ok(resultPtr) != 0)
-            {
-                var value_0 = RustResultTestClass_take_ok(resultPtr);
-                var value_1 = new TestClass(value_0);
-                return value_1;
-            }
-            else
-            {
-                var messagePtr = RustResultTestClass_take_error(resultPtr);
-                var message = RustString.rust_to_dotnet(messagePtr);
-                throw new Error(message);
-            }
-        }
-    }
-    
     internal static class RustOptionint {
         [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
         internal static extern IntPtr RustOptionint_new_none();
@@ -774,6 +682,146 @@ public static class TestStaticClass {
         }
     }
     
+    internal static class RustResultTestClass {
+
+        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern byte RustResultTestClass_is_ok(IntPtr resultPtr);
+
+        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern /* TestClass */ IntPtr RustResultTestClass_take_ok(IntPtr resultPtr);
+
+        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern /* mut c_str_u16 */ IntPtr RustResultTestClass_take_error(IntPtr resultPtr);
+
+        internal static TestClass unwrap(IntPtr resultPtr)
+        {
+            if (RustResultTestClass_is_ok(resultPtr) != 0)
+            {
+                var value_0 = RustResultTestClass_take_ok(resultPtr);
+                var value_1 = new TestClass(value_0);
+                return value_1;
+            }
+            else
+            {
+                var messagePtr = RustResultTestClass_take_error(resultPtr);
+                var message = RustString.rust_to_dotnet(messagePtr);
+                throw new Error(message);
+            }
+        }
+    }
+    
+    internal static class RustTuple2Tintstring {
+
+        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern /* Tuple */ IntPtr RustTuple2Tintstring_new(int t_1, /* const c_str_u16 */ IntPtr t_2);
+
+        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern int RustTuple2Tintstring_take_1(IntPtr tuple);
+
+        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern /* const c_str_u16 */ IntPtr RustTuple2Tintstring_take_2(IntPtr tuple);
+
+        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern void RustTuple2Tintstring_delete(IntPtr tuple);
+
+        internal static Tuple<int, string> rust_to_dotnet(IntPtr rustTuple)
+        {
+            var t_1_rust = RustTuple2Tintstring_take_1(rustTuple);
+            var t_1 = t_1_rust;
+            var t_2_rust = RustTuple2Tintstring_take_2(rustTuple);
+            var t_2 = RustString.rust_to_dotnet(t_2_rust);
+            var ret = Tuple.Create(t_1, t_2);
+            RustTuple2Tintstring_delete(rustTuple);
+            return ret;
+        }
+        internal static /* Tuple */ IntPtr dotnet_to_rust(Tuple<int, string> tuple)
+        {
+            var t_1 = tuple.Item1;
+            var t_1_rust = t_1;
+            var t_2 = tuple.Item2;
+            var t_2_rust = RustString.dotnet_to_rust(t_2);
+            // We don't call delete in `Input` scenario. Rust-side conversion code will take care of it.
+            return RustTuple2Tintstring_new(t_1_rust, t_2_rust);            
+        }
+    }
+    
+    internal static class RustResultVoid {
+
+        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern byte RustResultVoid_is_ok(IntPtr resultPtr);
+
+        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern /* mut c_str_u16 */ IntPtr RustResultVoid_take_err(IntPtr resultPtr);
+
+        internal static void unwrap(IntPtr resultPtr)
+        {
+            if (RustResultVoid_is_ok(resultPtr) != 0)
+            {
+                return;
+            }
+            else
+            {
+                var messagePtr = RustResultVoid_take_err(resultPtr);
+                var message = RustString.rust_to_dotnet(messagePtr);
+                throw new Error(message);
+            }
+        }
+    }
+    
+
+        public class Option<T> {
+        
+            [System.Serializable]
+            public class OptionNoneException : System.Exception
+            {
+                public OptionNoneException() :
+                    base("Trying to get the value of an `Option` that is `None`") 
+                {
+                }
+            }
+        
+            private T value;
+            private bool isSome;
+        
+            public bool IsSome
+            {
+                get
+                {
+                    return isSome;
+                }
+            }
+        
+            public T Value
+            {
+                get {
+                    if (!isSome) {
+                        throw new OptionNoneException();
+                    }
+                    return value;
+                }
+            }
+        
+            public Option()
+            {
+                value = default(T);
+                isSome = false;
+            }
+        
+            public Option(T value)
+            {
+                if (value == null) 
+                {
+                    this.value = value;
+                    this.isSome = false;
+                }
+                else
+                {
+                    this.value = value;
+                    this.isSome = true;
+                }
+            }
+        }        
+        
     internal static class RustResultTemplateI32 {
 
         [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
@@ -843,38 +891,44 @@ public static class TestStaticClass {
         }
     }
     
-    internal static class RustTuple2Tintstring {
+    internal static class RustOptionTestClass {
+        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern IntPtr RustOptionTestClass_new_none();
 
         [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern /* Tuple */ IntPtr RustTuple2Tintstring_new(int t_1, /* const c_str_u16 */ IntPtr t_2);
+        internal static extern IntPtr RustOptionTestClass_new_some(/* TestClass */ IntPtr value);
+        
+        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
+        internal static extern /* TestClass */ IntPtr RustOptionTestClass_take(IntPtr optPtr);
 
         [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int RustTuple2Tintstring_take_1(IntPtr tuple);
+        internal static extern byte RustOptionTestClass_is_some(IntPtr optPtr);
 
-        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern /* const c_str_u16 */ IntPtr RustTuple2Tintstring_take_2(IntPtr tuple);
-
-        [DllImport("ffi_domain_2_native", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void RustTuple2Tintstring_delete(IntPtr tuple);
-
-        internal static Tuple<int, string> rust_to_dotnet(IntPtr rustTuple)
+        internal static Option<TestClass> rust_to_dotnet(IntPtr optPtr)
         {
-            var t_1_rust = RustTuple2Tintstring_take_1(rustTuple);
-            var t_1 = t_1_rust;
-            var t_2_rust = RustTuple2Tintstring_take_2(rustTuple);
-            var t_2 = RustString.rust_to_dotnet(t_2_rust);
-            var ret = Tuple.Create(t_1, t_2);
-            RustTuple2Tintstring_delete(rustTuple);
-            return ret;
+            if (RustOptionTestClass_is_some(optPtr) != 0)
+            {
+                var value_0 = RustOptionTestClass_take(optPtr);
+                var value_1 = new TestClass(value_0);
+                return new Option<TestClass>(value_1);
+            }
+            else
+            {
+                return new Option<TestClass>();
+            }
         }
-        internal static /* Tuple */ IntPtr dotnet_to_rust(Tuple<int, string> tuple)
+
+        internal static IntPtr dotnet_to_rust(Option<TestClass> opt)
         {
-            var t_1 = tuple.Item1;
-            var t_1_rust = t_1;
-            var t_2 = tuple.Item2;
-            var t_2_rust = RustString.dotnet_to_rust(t_2);
-            // We don't call delete in `Input` scenario. Rust-side conversion code will take care of it.
-            return RustTuple2Tintstring_new(t_1_rust, t_2_rust);            
+            if (opt.IsSome)
+            {
+                var value_0 = opt.Value.nativePtr;
+                return RustOptionTestClass_new_some(value_0);
+            }
+            else
+            {
+                return RustOptionTestClass_new_none();
+            }
         }
     }
     
@@ -918,58 +972,4 @@ public static class TestStaticClass {
             }
         }
     }
-    
-
-        public class Option<T> {
-        
-            [System.Serializable]
-            public class OptionNoneException : System.Exception
-            {
-                public OptionNoneException() :
-                    base("Trying to get the value of an `Option` that is `None`") 
-                {
-                }
-            }
-        
-            private T value;
-            private bool isSome;
-        
-            public bool IsSome
-            {
-                get
-                {
-                    return isSome;
-                }
-            }
-        
-            public T Value
-            {
-                get {
-                    if (!isSome) {
-                        throw new OptionNoneException();
-                    }
-                    return value;
-                }
-            }
-        
-            public Option()
-            {
-                value = default(T);
-                isSome = false;
-            }
-        
-            public Option(T value)
-            {
-                if (value == null) 
-                {
-                    this.value = value;
-                    this.isSome = false;
-                }
-                else
-                {
-                    this.value = value;
-                    this.isSome = true;
-                }
-            }
-        }        
-        } // namespace
+    } // namespace
